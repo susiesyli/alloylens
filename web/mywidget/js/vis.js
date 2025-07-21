@@ -179,10 +179,8 @@ export function kde(
         //scales
         // scales: { sx, sy }
     });
-
     // sel.scales = { sx, sy };
-
-    return sel;
+    // return sel;
 }
 
 function compute_kde(
@@ -406,7 +404,8 @@ export function create_scatter_gl_program(regl) {
     return render_func;
 }
 
-export function scatter_frame(
+export // a frame specifically for scatterplot
+function scatter_frame(
     container = undefined,
     data = undefined,
     {
@@ -430,7 +429,7 @@ export function scatter_frame(
         is_log_scale = false,
         xlabel = undefined,
         ylabel = undefined,
-        label_fontsize = 12,
+        label_fontsize = 10,
     } = {},
 ) {
     if (container === undefined) {
@@ -949,7 +948,7 @@ export function splom_gl2(
 
                                 highlight_brushed(
                                     data,
-                                    scales,
+                                    scales.sc,
                                     cross,
                                     subplots,
                                     row_attrs,
@@ -958,9 +957,9 @@ export function splom_gl2(
 
                                 // //save brushed_data to returned object (return_node)
                                 return_node.brushed_data = brushed_data;
-                                set_value(return_node, {
-                                    brush: {selected: return_node.brushed_data},
-                                });
+                                // set_value(return_node, {
+                                //     brush: {selected: return_node.brushed_data},
+                                // });
 
                                 //call listener, if any
                                 if (brush_listeners["brush"]) {
@@ -983,7 +982,7 @@ export function splom_gl2(
 
                                     highlight_brushed(
                                         data,
-                                        scales,
+                                        scales.sc,
                                         cross,
                                         subplots,
                                         row_attrs,
@@ -992,11 +991,11 @@ export function splom_gl2(
 
                                     // //save brushed_data to returned object (return_node)
                                     return_node.brushed_data = brushed_data;
-                                    set_value(return_node, {
-                                        brush: {
-                                            selected: return_node.brushed_data,
-                                        },
-                                    });
+                                    // set_value(return_node, {
+                                    //     brush: {
+                                    //         selected: return_node.brushed_data,
+                                    //     },
+                                    // });
 
                                     if (brush_listeners["end"]) {
                                         brush_listeners["end"]([]);
@@ -1017,7 +1016,9 @@ export function splom_gl2(
 
                     frame_container.node().appendChild(kde_plot.node());
                 } else {
-                    let plot = {plot_width, plot_height};
+                    //scatter plot
+                    //
+                    let plot = {plot_width, plot_height, scales, brush};
                     subplots[i][j] = plot;
 
                     //i!==j, scatter plots
@@ -1027,8 +1028,8 @@ export function splom_gl2(
                         y: (d) => d[row_attrs[i]],
                         width: plot_width,
                         height: plot_height,
-                        xlabel: col_attrs[j],
-                        ylabel: row_attrs[i],
+                        xlabel: i == 0 ? col_attrs[j] : "",
+                        ylabel: j == 0 ? row_attrs[i] : "",
                         is_square_scale,
                         xticks: xticks,
                         yticks: yticks,
@@ -1055,14 +1056,20 @@ export function splom_gl2(
                         .style("font-size", `${label_fontsize}px`);
 
                     //hide scatterplot x-axes tick text that are not on the bottom
-                    // if (i !== 0) {
-                    d3.select(frame)
-                        .selectAll(".x-axis .tick text")
-                        .style("display", "none");
-                    // }
-                    d3.select(frame)
-                        .selectAll(".y-axis .tick text")
-                        .style("display", "none");
+                    if (i !== 0) {
+                        d3.select(frame)
+                            .selectAll(".x-axis .tick text")
+                            .style("display", "none");
+                    }
+                    if (j !== 0) {
+                        d3.select(frame)
+                            .selectAll(".y-axis .tick text")
+                            .style("display", "none");
+                    } else {
+                        d3.select(frame)
+                            .selectAll(".y-axis .tick text")
+                            .attr("transform", "translate(-10,0)");
+                    }
 
                     // gl render here
                     let {sx, sy} = frame.scales; //updated sx, sy;
@@ -1106,6 +1113,7 @@ export function splom_gl2(
                         );
                     overlay_container.node().appendChild(overlay_ij.node());
 
+                    // scatterplot brush
                     // Brushes on scatterplot, scatterplot brushes
                     if (brush) {
                         function brush_record_format(row_attr, col_attr) {
@@ -1159,14 +1167,14 @@ export function splom_gl2(
                                 dim_y.filter([y0, y1]);
                                 // update selection
                                 let brushed_data = dim_x.bottom(Infinity);
-                                console.log(`brushed ${col_attrs[j]}`, [
-                                    x0,
-                                    x1,
-                                ]);
-                                console.log(`brushed ${row_attrs[i]}`, [
-                                    y0,
-                                    y1,
-                                ]);
+                                // console.log(`brushed ${col_attrs[j]}`, [
+                                //     x0,
+                                //     x1,
+                                // ]);
+                                // console.log(`brushed ${row_attrs[i]}`, [
+                                //     y0,
+                                //     y1,
+                                // ]);
                                 // console.log(`brushed ${brushed_data.length} points`);
                                 active_brushes.add(
                                     brush_record_format(
@@ -1183,7 +1191,7 @@ export function splom_gl2(
 
                                 highlight_brushed(
                                     data,
-                                    scales,
+                                    scales.sc,
                                     cross,
                                     subplots,
                                     row_attrs,
@@ -1232,9 +1240,9 @@ export function splom_gl2(
                                 }
                                 // //save brushed_data to returned object (return_node)
                                 return_node.brushed_data = brushed_data;
-                                set_value(return_node, {
-                                    brush: {selected: return_node.brushed_data},
-                                });
+                                // set_value(return_node, {
+                                //     brush: {selected: return_node.brushed_data},
+                                // });
 
                                 if (brush_listeners["end"]) {
                                     brush_listeners["end"]([]);
@@ -1263,7 +1271,7 @@ export function splom_gl2(
 
                                     highlight_brushed(
                                         data,
-                                        scales,
+                                        scales.sc,
                                         cross,
                                         subplots,
                                         row_attrs,
@@ -1271,11 +1279,11 @@ export function splom_gl2(
                                     );
                                     // save brushed_data to returned object (return_node)
                                     return_node.brushed_data = brushed_data;
-                                    set_value(return_node, {
-                                        brush: {
-                                            selected: return_node.brushed_data,
-                                        },
-                                    });
+                                    // set_value(return_node, {
+                                    //     brush: {
+                                    //         selected: return_node.brushed_data,
+                                    //     },
+                                    // });
 
                                     if (brush_listeners["end"]) {
                                         brush_listeners["end"]([]);
@@ -1362,6 +1370,11 @@ export function splom_gl2(
     let return_node = container_div.node();
     return_node.data = data;
     return_node.subplots = draw_subplots();
+    return_node.cross = cross; //crossfilter
+    return_node.dimensions = dimensions; //crossfilter
+    return_node.row_attrs = row_attrs;
+    return_node.col_attrs = col_attrs;
+
     return_node.clear = () => {
         // regl._gl.clearColor(0, 0, 0, 1);
         regl.clear({
@@ -1371,6 +1384,7 @@ export function splom_gl2(
         });
     };
 
+    return_node.highlight_brushed = highlight_brushed;
     // the entire splom recolor
     return_node.recolor = (colors, {depths} = {}) => {
         return_node.clear();
@@ -1468,7 +1482,7 @@ export function splom_gl2(
 
 function highlight_brushed(
     data,
-    scales,
+    sc,
     cross,
     subplots,
     row_attrs,
@@ -1483,12 +1497,13 @@ function highlight_brushed(
     });
 
     //new color scale (sc) by brushed
-    let sc = (d) => (d.brushed ? scales.sc(d) : "#aaa");
+    let highlight_sc = (d) => (d.brushed ? sc(d) : "#aaa");
     let sc_gl = (d) => {
-        let c = sc(d);
+        let c = highlight_sc(d);
         return [...color2gl(c), 1.0];
     };
     let colors = data.map((d) => sc_gl(d));
+    console.log("colors", colors);
     let depths = data.map((d) => (d.brushed ? 0.0 : 0.999)); //0=near, 1=far
     if (brush_highlight) {
         subplots.forEach((subplot_row, i) =>
@@ -1795,9 +1810,11 @@ export function frame(
     sel = undefined,
     data = undefined,
     {
+        x_label_offset = 24,
+        y_label_offset = -10,
         background = "#eee",
-        xticks = 5,
-        yticks = 5,
+        xticks = 4,
+        yticks = 4,
         x_tickvalues = undefined,
         y_tickvalues = undefined,
         x = (d) => d.x,
@@ -1818,11 +1835,11 @@ export function frame(
         title = undefined,
         font_family = "sans-serif",
         font_size = 14,
-        is_square_scale = false,
+        is_square_scale = true,
         is_log_scale = false,
         xlabel = undefined,
         ylabel = undefined,
-        label_fontsize = 12,
+        label_fontsize = 10,
         stroke = "#fff",
         stroke_width = 0.2,
     } = {},
@@ -1831,8 +1848,8 @@ export function frame(
         sel = create_svg(width, height);
     }
     //domain / extent
-    let ex = data !== undefined ? d3.extent(data, (d, i) => x(d, i)) : [0, 1];
-    let ey = data !== undefined ? d3.extent(data, (d, i) => y(d, i)) : [0, 1];
+    let ex = data !== undefined ? d3.extent(data, (d) => x(d)) : [0, 1];
+    let ey = data !== undefined ? d3.extent(data, (d) => y(d)) : [0, 1];
     if (x_tickvalues !== undefined) {
         ex[0] = Math.min(ex[0], d3.min(x_tickvalues));
         ex[1] = Math.max(ex[1], d3.max(x_tickvalues));
@@ -1885,6 +1902,8 @@ export function frame(
         .attr("class", "x-axis")
         .attr("transform", `translate(0,${height - padding_bottom})`)
         .call(ax);
+    gx.selectAll("text").style("font-size", `${label_fontsize}px`);
+
     let ay = d3
         .axisLeft(sy)
         .ticks(yticks)
@@ -1897,16 +1916,8 @@ export function frame(
         .attr("class", "y-axis")
         .attr("transform", `translate(${padding_left},0)`)
         .call(ay);
+    gy.selectAll("text").style("font-size", `${label_fontsize}px`);
 
-    //TODO not good practice, polluted other views
-    // sel.append("style").node().innerHTML = `
-    //     .tick > line{
-    //       stroke: ${d3.color(background).brighter()};
-    //     }
-    //     path.domain{
-    //       display: none;
-    //     }
-    //   `;
     sel.selectAll(".tick > line").style(
         "stroke",
         stroke || d3.color(background).brighter(),
@@ -1926,7 +1937,7 @@ export function frame(
                 "transform",
                 `translate(${
                     padding_left + (width - padding_right - padding_left) / 2
-                },${padding_top - font_size / 2})`,
+                },${padding_top - 2})`,
             )
             .attr("alignment-baseline", "top")
             .attr("text-anchor", "middle")
@@ -1943,7 +1954,9 @@ export function frame(
             .attr("class", "xlabel")
             .attr(
                 "transform",
-                `translate(${d3.mean(sx.range())},${height - padding_bottom - 2})`,
+                `translate(${d3.mean(sx.range())},${
+                    height - padding_bottom - 2 + x_label_offset
+                })`,
             )
             // .attr("alignment-baseline", "top")
             .attr("text-anchor", "middle")
@@ -1959,7 +1972,9 @@ export function frame(
             .attr("class", "ylabel")
             .attr(
                 "transform",
-                `translate(${padding_left + 2},${d3.mean(sy.range())}) rotate(90)`,
+                `translate(${padding_left + 2 + y_label_offset},${d3.mean(
+                    sy.range(),
+                )}) rotate(90)`,
             )
             .attr("alignment-baseline", "bottom")
             .attr("text-anchor", "middle")
@@ -2027,4 +2042,14 @@ export function square_scale(x_extent, y_extent, width_extent, height_extent) {
             ]);
     }
     return [sx, sy];
+}
+
+export function cumulative_sum(arr) {
+    const cumulativeArr = [];
+    let currentSum = 0;
+    for (let i = 0; i < arr.length; i++) {
+        currentSum += arr[i];
+        cumulativeArr.push(currentSum);
+    }
+    return cumulativeArr;
 }
