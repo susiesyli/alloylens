@@ -121,7 +121,6 @@ function render({model, el}) {
 }
 
 function draw_bottom_sliders(svg, splom) {
-    // grab subplot sx's
     //data
     let splom_subplots = splom.subplots;
     let n_cols = splom_subplots[0].length;
@@ -135,20 +134,22 @@ function draw_bottom_sliders(svg, splom) {
         0,
         ...splom_subplots[0].map((subplot) => subplot.plot_width),
     ]);
-    let sxs = splom_subplots[0].map((subplot, j) => {
-        let sx0 = subplot.scales.sx;
-        let range0 = sx0.range();
-        return d3
-            .scaleLinear()
-            .domain(sx0.domain())
-            .range([range0[0] + x_offsets[j], range0[1] + x_offsets[j]]);
-    });
+    let sxs = splom_subplots[0].map((subplot, j) => subplot.scales.sx);
+    // let range0 = sx0.range();
+    // return d3
+    //     .scaleLinear()
+    //     .domain(sx0.domain())
+    //     .range([range0[0] + x_offsets[j], range0[1] + x_offsets[j]]);
 
-    //slider grey bg lines
-    let sliders_bg = svg
-        .selectAll("line.slider_bg")
+    let g_sliders = svg
+        .selectAll("g.bottom_slider")
         .data(d3.range(n_cols))
-        .join("line")
+        .join("g")
+        .attr("class", "bottom_slider")
+        .attr("transform", (i) => `translate(${x_offsets[i]}, ${0})`);
+    //slider grey bg lines
+    let sliders_bg = g_sliders
+        .append("line")
         .attr("class", "slider_bg")
         .attr("stroke", "#aaa")
         .attr("stroke-width", control_size * 0.6)
@@ -157,10 +158,8 @@ function draw_bottom_sliders(svg, splom) {
         .attr("y1", y_offset)
         .attr("y2", y_offset);
 
-    let sliders_fg = svg
-        .selectAll("line.slider_fg")
-        .data(d3.range(n_cols))
-        .join("line")
+    let sliders_fg = g_sliders
+        .append("line")
         .attr("class", "slider_fg")
         .attr("stroke", C[0])
         .attr("stroke-width", control_size * 0.6)
@@ -169,22 +168,18 @@ function draw_bottom_sliders(svg, splom) {
         .attr("y1", y_offset)
         .attr("y2", y_offset);
 
-    let control_min = svg
-        .selectAll("circle.slider_control_min")
-        .data(d3.range(n_cols))
-        .join("circle")
+    let control_min = g_sliders
+        .append("circle")
         .attr("class", "slider_control_min")
         .attr("cx", (i) => sxs[i].range()[0])
-        .attr("cy", 10)
+        .attr("cy", y_offset)
         .call(style_control, control_size);
 
-    let control_max = svg
-        .selectAll("circle.slider_control_max")
-        .data(d3.range(n_cols))
-        .join("circle")
+    let control_max = g_sliders
+        .append("circle")
         .attr("class", "slider_control_max")
         .attr("cx", (i) => sxs[i].range()[1])
-        .attr("cy", 10)
+        .attr("cy", y_offset)
         .call(style_control, control_size);
 
     //interactions
@@ -206,6 +201,7 @@ function draw_bottom_sliders(svg, splom) {
             splom.col_attrs,
         );
     }
+
     control_min.call(
         d3.drag().on("drag", function (event) {
             let j = d3.select(this).datum();
@@ -231,6 +227,7 @@ function draw_bottom_sliders(svg, splom) {
         }),
     );
 
+    //single and double click
     let timeout = null; //to distinguish single and double click on the slider bar
     sliders_fg.on("click", function (event) {
         // single click to snap min/max to the click
@@ -253,6 +250,7 @@ function draw_bottom_sliders(svg, splom) {
             set_filter_bounds(j, new_x1, new_x2, sx, splom);
         }, 300); //  the delay (in milliseconds) for single click
     });
+
     sliders_fg.on("dblclick", function (event) {
         //double click to reset slider min & max
         clearTimeout(timeout); // Clear the single-click timeout
@@ -263,6 +261,7 @@ function draw_bottom_sliders(svg, splom) {
         let new_x2 = sx.range()[1];
         set_filter_bounds(j, new_x1, new_x2, sx, splom);
     });
+
     sliders_fg.call(
         d3.drag().on("drag", function (event) {
             let dx = event.dx;
@@ -284,5 +283,5 @@ function draw_bottom_sliders(svg, splom) {
     // todo tooltip
 }
 
-function draw_side_sliders() {}
+function draw_side_sliders(svg, splom) {}
 export default {render};
