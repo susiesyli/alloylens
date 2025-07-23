@@ -2,6 +2,14 @@ import * as d3 from "d3";
 
 import {splom_gl2, C, cumulative_sum, clip} from "./vis.js";
 
+function style_control(sel, control_size) {
+    // stylize control circles
+    sel.attr("fill", C[0])
+        .attr("stroke", "white")
+        .attr("stroke-width", control_size / 10)
+        .attr("r", control_size / 2);
+}
+
 function render({model, el}) {
     // let button = document.createElement("button");
     // button.innerHTML = `count is ${model.get("value")}`;
@@ -15,8 +23,6 @@ function render({model, el}) {
     // });
     // el.classList.add("counter-widget");
     // el.appendChild(button);
-
-    console.log("render() start");
 
     //data
     let data = model.get("data")["data"];
@@ -159,13 +165,6 @@ function draw_bottom_sliders(svg, splom) {
         .attr("y1", y_offset)
         .attr("y2", y_offset);
 
-    // control circles
-    function style_control(sel) {
-        sel.attr("fill", C[0])
-            .attr("stroke", "white")
-            .attr("stroke-width", control_size / 10)
-            .attr("r", control_size / 2);
-    }
     let control_min = svg
         .selectAll("circle.slider_control_min")
         .data(d3.range(n_cols))
@@ -173,7 +172,7 @@ function draw_bottom_sliders(svg, splom) {
         .attr("class", "slider_control_min")
         .attr("cx", (i) => sxs[i].range()[0])
         .attr("cy", 10)
-        .call(style_control);
+        .call(style_control, control_size);
 
     let control_max = svg
         .selectAll("circle.slider_control_max")
@@ -182,95 +181,18 @@ function draw_bottom_sliders(svg, splom) {
         .attr("class", "slider_control_max")
         .attr("cx", (i) => sxs[i].range()[1])
         .attr("cy", 10)
-        .call(style_control);
+        .call(style_control, control_size);
 
-    control_min.call(
-        d3.drag().on("drag", function (event) {
-            let j = d3.select(this).datum();
-            let sx = sxs[j];
-            let x = event.x;
-            let range = sx.range();
-            let upper = +d3.select(control_max.nodes()[j]).attr("cx");
-            //bound x value between x scale's range min and upper bound of the current slider;
-            x = clip(x, range[0], upper - (range[1] - range[0]) * 0.05);
-
-            // update control
-            d3.select(this).attr("cx", x);
-            // update slider fg
-            d3.select(sliders_fg.nodes()[j]).attr("x1", x);
-            // update splom subplots
-            let dim = splom.dimensions[splom.col_attrs[j]];
-            let currentFilter = dim.currentFilter();
-            if (currentFilter !== undefined) {
-                dim.filter([sx.invert(x), dim.currentFilter()[1]]);
-            } else {
-                dim.filter([sx.invert(x), sx.domain()[1]]);
-            }
-            splom.highlight_brushed(
-                splom.data,
-                splom.subplots[0][0].scales.sc,
-                splom.cross,
-                splom.subplots,
-                splom.row_attrs,
-                splom.col_attrs,
-            );
-        }),
-    );
-
-    control_max.call(
-        d3.drag().on("drag", function (event) {
-            let j = d3.select(this).datum();
-            let sx = sxs[j];
-            let x = event.x;
-
-            let range = sx.range();
-            let lower = +d3.select(control_min.nodes()[j]).attr("cx");
-            x = clip(x, lower + (range[1] - range[0]) * 0.05, range[1]);
-
-            // update control
-            d3.select(this).attr("cx", x);
-            // update slider fg
-            d3.select(sliders_fg.nodes()[j]).attr("x2", x);
-            // update splom subplots
-            let dim = splom.dimensions[splom.col_attrs[j]];
-            let currentFilter = dim.currentFilter();
-            if (currentFilter !== undefined) {
-                dim.filter([currentFilter[0], sx.invert(x)]);
-            } else {
-                dim.filter([sx.domain()[0], sx.invert(x)]);
-            }
-            splom.highlight_brushed(
-                splom.data,
-                splom.subplots[0][0].scales.sc,
-                splom.cross,
-                splom.subplots,
-                splom.row_attrs,
-                splom.col_attrs,
-            );
-        }),
-    );
-
-    sliders_fg.on("click", function (event) {
-        console.log("click");
-    });
-    sliders_fg.on("dblclick", function (event) {
-        console.log("dblclick");
-        //get the x scale (sx)
-        let j = d3.select(this).datum();
-        let sx = sxs[j];
-
-        // update slider fg
-        let new_x1 = sx.range()[0];
-        let new_x2 = sx.range()[1];
-        let me = d3.select(this).attr("x1", new_x1).attr("x2", new_x2);
+    //interactions
+    function set_filter_bounds(j, lower, upper, sx, splom) {
         // update control
-        d3.select(control_min.nodes()[j]).attr("cx", new_x1);
-        d3.select(control_max.nodes()[j]).attr("cx", new_x2);
-
+        d3.select(control_min.nodes()[j]).attr("cx", lower);
+        d3.select(control_max.nodes()[j]).attr("cx", upper);
+        d3.select(sliders_fg.nodes()[j]).attr("x1", lower).attr("x2", upper);
         // update splom subplots
         let dim = splom.dimensions[splom.col_attrs[j]];
-        dim.filter([sx.invert(new_x1), sx.invert(new_x2)]);
-        // console.log("new filter", sx.invert(new_x1), sx.invert(new_x2));
+        let currentFilter = dim.currentFilter();
+        dim.filter([sx.invert(lower), sx.invert(upper)]);
         splom.highlight_brushed(
             splom.data,
             splom.subplots[0][0].scales.sc,
@@ -279,47 +201,82 @@ function draw_bottom_sliders(svg, splom) {
             splom.row_attrs,
             splom.col_attrs,
         );
+    }
+    control_min.call(
+        d3.drag().on("drag", function (event) {
+            let j = d3.select(this).datum();
+            let sx = sxs[j];
+            let range = sx.range();
+            let x = event.x;
+            let xmax = +d3.select(control_max.nodes()[j]).attr("cx");
+            //bound x value between x scale's range min and upper bound of the current slider;
+            let xmin = clip(x, range[0], xmax - (range[1] - range[0]) * 0.05);
+            set_filter_bounds(j, xmin, xmax, sx, splom);
+        }),
+    );
+
+    control_max.call(
+        d3.drag().on("drag", function (event) {
+            let j = d3.select(this).datum();
+            let sx = sxs[j];
+            let range = sx.range();
+            let x = event.x;
+            let xmin = +d3.select(control_min.nodes()[j]).attr("cx");
+            let xmax = clip(x, xmin + (range[1] - range[0]) * 0.05, range[1]);
+            set_filter_bounds(j, xmin, xmax, sx, splom);
+        }),
+    );
+
+    let timeout = null; //to distinguish single and double click on the slider bar
+    sliders_fg.on("click", function (event) {
+        // single click to snap min/max to the click
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            let j = d3.select(this).datum();
+            let sx = sxs[j];
+            let x = event.offsetX;
+            let me = d3.select(this);
+            let x1 = +me.attr("x1");
+            let x2 = +me.attr("x2");
+            // update slider fg
+            let new_x1 = x1;
+            let new_x2 = x2;
+            if (x2 - x < x - x1) {
+                new_x2 = x;
+            } else {
+                new_x1 = x;
+            }
+            set_filter_bounds(j, new_x1, new_x2, sx, splom);
+        }, 300); //  the delay (in milliseconds) for single click
+    });
+    sliders_fg.on("dblclick", function (event) {
+        //double click to reset slider min & max
+        clearTimeout(timeout); // Clear the single-click timeout
+        //get the x scale (sx)
+        let j = d3.select(this).datum();
+        let sx = sxs[j];
+        let new_x1 = sx.range()[0];
+        let new_x2 = sx.range()[1];
+        set_filter_bounds(j, new_x1, new_x2, sx, splom);
     });
     sliders_fg.call(
         d3.drag().on("drag", function (event) {
             let dx = event.dx;
-
-            //get the x scale (sx)
             let j = d3.select(this).datum();
             let sx = sxs[j];
-
             //get current bounding values
             let me = d3.select(this);
             let x1 = +me.attr("x1");
             let x2 = +me.attr("x2");
             let range = sx.range();
-
             //bound dx value by the available space on both sides
             dx = clip(dx, range[0] - x1, range[1] - x2);
-
             // update slider fg
             let new_x1 = x1 + dx;
             let new_x2 = x2 + dx;
-            me.attr("x1", new_x1).attr("x2", new_x2);
-            // update control
-            d3.select(control_min.nodes()[j]).attr("cx", new_x1);
-            d3.select(control_max.nodes()[j]).attr("cx", new_x2);
-
-            // update splom subplots
-            let dim = splom.dimensions[splom.col_attrs[j]];
-            dim.filter([sx.invert(new_x1), sx.invert(new_x2)]);
-            // console.log("new filter", sx.invert(new_x1), sx.invert(new_x2));
-            splom.highlight_brushed(
-                splom.data,
-                splom.subplots[0][0].scales.sc,
-                splom.cross,
-                splom.subplots,
-                splom.row_attrs,
-                splom.col_attrs,
-            );
+            set_filter_bounds(j, new_x1, new_x2, sx, splom);
         }),
     );
-    //
     // todo tooltip
 }
 
