@@ -10,15 +10,16 @@ svg text {
     font-size: 10pt;
 }
 
-.slider_control_min,
-.slider_control_max {
+.slider-bg,
+.slider-control-min,
+.slider-control-max {
     cursor: pointer;
 }
 
-.slider_fg {
+.slider-fg {
     cursor: ew-resize;
 }
 
-.slider_bg {
+.slider-bg {
     stroke-linecap: round;
 }

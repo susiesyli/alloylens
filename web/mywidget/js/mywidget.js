@@ -97,7 +97,7 @@ function render({model, el}) {
     //add bottom sliders
     let bottom_sliders = root_div
         .append("svg")
-        .attr("class", "bottom-sliders")
+        .attr("class", "bottom-slider")
         .attr("width", splom_width)
         .attr("height", bottom_bar_height)
         .style("background", "#efe") //bg for layout debugging
@@ -109,7 +109,7 @@ function render({model, el}) {
     //add side sliders
     let side_sliders = root_div
         .append("svg")
-        .attr("class", "side-sliders")
+        .attr("class", "side-slider")
         .attr("width", side_bar_width)
         .attr("height", splom_height)
         .style("background", "#efe") //bg for layout debugging
@@ -145,12 +145,13 @@ function draw_bottom_sliders(svg, splom) {
         .selectAll("g.bottom_slider")
         .data(d3.range(n_cols))
         .join("g")
-        .attr("class", "bottom_slider")
+        .attr("class", "bottom-slider")
         .attr("transform", (i) => `translate(${x_offsets[i]}, ${0})`);
+
     //slider grey bg lines
     let sliders_bg = g_sliders
         .append("line")
-        .attr("class", "slider_bg")
+        .attr("class", "slider-bg")
         .attr("stroke", "#aaa")
         .attr("stroke-width", control_size * 0.6)
         .attr("x1", (i) => sxs[i].range()[0])
@@ -160,7 +161,7 @@ function draw_bottom_sliders(svg, splom) {
 
     let sliders_fg = g_sliders
         .append("line")
-        .attr("class", "slider_fg")
+        .attr("class", "slider-fg")
         .attr("stroke", C[0])
         .attr("stroke-width", control_size * 0.6)
         .attr("x1", (i) => sxs[i].range()[0])
@@ -170,14 +171,14 @@ function draw_bottom_sliders(svg, splom) {
 
     let control_min = g_sliders
         .append("circle")
-        .attr("class", "slider_control_min")
+        .attr("class", "slider-control-min")
         .attr("cx", (i) => sxs[i].range()[0])
         .attr("cy", y_offset)
         .call(style_control, control_size);
 
     let control_max = g_sliders
         .append("circle")
-        .attr("class", "slider_control_max")
+        .attr("class", "slider-control-max")
         .attr("cx", (i) => sxs[i].range()[1])
         .attr("cy", y_offset)
         .call(style_control, control_size);
@@ -228,38 +229,64 @@ function draw_bottom_sliders(svg, splom) {
     );
 
     //single and double click
+    function snap_bounds(this_node, x, current_x1, current_x2) {
+        let j = d3.select(this_node).datum();
+        let sx = sxs[j];
+        let new_x1 = current_x1;
+        let new_x2 = current_x2;
+        if (Math.abs(x - current_x1) < Math.abs(x - current_x2)) {
+            new_x1 = x;
+        } else {
+            new_x2 = x;
+        }
+        // update slider fg and splom
+        set_filter_bounds(j, new_x1, new_x2, sx, splom);
+    }
+
     let timeout = null; //to distinguish single and double click on the slider bar
+
     sliders_fg.on("click", function (event) {
         // single click to snap min/max to the click
         clearTimeout(timeout);
         timeout = setTimeout(() => {
-            let j = d3.select(this).datum();
-            let sx = sxs[j];
-            let x = event.offsetX;
             let me = d3.select(this);
             let x1 = +me.attr("x1");
             let x2 = +me.attr("x2");
-            // update slider fg
-            let new_x1 = x1;
-            let new_x2 = x2;
-            if (x2 - x < x - x1) {
-                new_x2 = x;
-            } else {
-                new_x1 = x;
-            }
-            set_filter_bounds(j, new_x1, new_x2, sx, splom);
+            snap_bounds(this, event.layerX, x1, x2);
         }, 300); //  the delay (in milliseconds) for single click
     });
 
-    sliders_fg.on("dblclick", function (event) {
-        //double click to reset slider min & max
-        clearTimeout(timeout); // Clear the single-click timeout
+    sliders_bg.on("click", function (event) {
+        // single click to snap min/max to the click
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            let j = d3.select(this).datum();
+            let fg = d3.select(sliders_fg.nodes()[j]);
+            let x1 = +fg.attr("x1");
+            let x2 = +fg.attr("x2");
+            snap_bounds(this, event.layerX, x1, x2);
+        }, 300); //  the delay (in milliseconds) for single click
+    });
+
+    function reset_bounds(this_node) {
         //get the x scale (sx)
-        let j = d3.select(this).datum();
+        let j = d3.select(this_node).datum();
         let sx = sxs[j];
         let new_x1 = sx.range()[0];
         let new_x2 = sx.range()[1];
         set_filter_bounds(j, new_x1, new_x2, sx, splom);
+    }
+
+    sliders_fg.on("dblclick", function (event) {
+        //double click to reset slider min & max
+        clearTimeout(timeout); // Clear the single-click timeout
+        reset_bounds(this);
+    });
+
+    sliders_bg.on("dblclick", function (event) {
+        //double click to reset slider min & max
+        clearTimeout(timeout); // Clear the single-click timeout
+        reset_bounds(this);
     });
 
     sliders_fg.call(
@@ -280,7 +307,9 @@ function draw_bottom_sliders(svg, splom) {
             set_filter_bounds(j, new_x1, new_x2, sx, splom);
         }),
     );
+
     // todo tooltip
+    //
 }
 
 function draw_side_sliders(svg, splom) {}
