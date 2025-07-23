@@ -11,6 +11,8 @@ function style_control(sel, control_size) {
 }
 
 function render({model, el}) {
+    console.log("model", model);
+    console.log("el", el);
     // let button = document.createElement("button");
     // button.innerHTML = `count is ${model.get("value")}`;
     // button.addEventListener("click", () => {
@@ -117,6 +119,7 @@ function render({model, el}) {
         .style("left", `${0}px`)
         .style("top", `${0}px`)
         .call(draw_side_sliders, splom);
+
     el.appendChild(root_div.node());
 }
 
@@ -135,11 +138,6 @@ function draw_bottom_sliders(svg, splom) {
         ...splom_subplots[0].map((subplot) => subplot.plot_width),
     ]);
     let sxs = splom_subplots[0].map((subplot, j) => subplot.scales.sx);
-    // let range0 = sx0.range();
-    // return d3
-    //     .scaleLinear()
-    //     .domain(sx0.domain())
-    //     .range([range0[0] + x_offsets[j], range0[1] + x_offsets[j]]);
 
     let g_sliders = svg
         .selectAll("g.bottom_slider")
@@ -161,7 +159,7 @@ function draw_bottom_sliders(svg, splom) {
 
     let sliders_fg = g_sliders
         .append("line")
-        .attr("class", "slider-fg")
+        .attr("class", "bottom-slider-fg")
         .attr("stroke", C[0])
         .attr("stroke-width", control_size * 0.6)
         .attr("x1", (i) => sxs[i].range()[0])
@@ -184,15 +182,17 @@ function draw_bottom_sliders(svg, splom) {
         .call(style_control, control_size);
 
     //interactions
-    function set_filter_bounds(j, lower, upper, sx, splom) {
+    function set_x_filter_bounds(j, lower, upper, sx, splom) {
         // update control
-        d3.select(control_min.nodes()[j]).attr("cx", lower);
-        d3.select(control_max.nodes()[j]).attr("cx", upper);
-        d3.select(sliders_fg.nodes()[j]).attr("x1", lower).attr("x2", upper);
+        d3.select(control_min.nodes()[j]).attr("cx", sx(lower));
+        d3.select(control_max.nodes()[j]).attr("cx", sx(upper));
+        d3.select(sliders_fg.nodes()[j])
+            .attr("x1", sx(lower))
+            .attr("x2", sx(upper));
         // update splom subplots
         let dim = splom.dimensions[splom.col_attrs[j]];
         let currentFilter = dim.currentFilter();
-        dim.filter([sx.invert(lower), sx.invert(upper)]);
+        dim.filter([lower, upper]);
         splom.highlight_brushed(
             splom.data,
             splom.subplots[0][0].scales.sc,
@@ -207,12 +207,18 @@ function draw_bottom_sliders(svg, splom) {
         d3.drag().on("drag", function (event) {
             let j = d3.select(this).datum();
             let sx = sxs[j];
-            let range = sx.range();
-            let x = event.x;
-            let xmax = +d3.select(control_max.nodes()[j]).attr("cx");
+            let domain = sx.domain();
+            let x = sx.invert(event.x);
+            let x_upper = sx.invert(
+                +d3.select(control_max.nodes()[j]).attr("cx"),
+            );
             //bound x value between x scale's range min and upper bound of the current slider;
-            let xmin = clip(x, range[0], xmax - (range[1] - range[0]) * 0.05);
-            set_filter_bounds(j, xmin, xmax, sx, splom);
+            let x_lower = clip(
+                x,
+                domain[0],
+                x_upper - (domain[1] - domain[0]) * 0.05,
+            );
+            set_x_filter_bounds(j, x_lower, x_upper, sx, splom);
         }),
     );
 
@@ -220,16 +226,22 @@ function draw_bottom_sliders(svg, splom) {
         d3.drag().on("drag", function (event) {
             let j = d3.select(this).datum();
             let sx = sxs[j];
-            let range = sx.range();
-            let x = event.x;
-            let xmin = +d3.select(control_min.nodes()[j]).attr("cx");
-            let xmax = clip(x, xmin + (range[1] - range[0]) * 0.05, range[1]);
-            set_filter_bounds(j, xmin, xmax, sx, splom);
+            let domain = sx.domain();
+            let x = sx.invert(event.x);
+            let x_lower = sx.invert(
+                +d3.select(control_min.nodes()[j]).attr("cx"),
+            );
+            let x_upper = clip(
+                x,
+                x_lower + (domain[1] - domain[0]) * 0.05,
+                domain[1],
+            );
+            set_x_filter_bounds(j, x_lower, x_upper, sx, splom);
         }),
     );
 
     //single and double click
-    function snap_bounds(this_node, x, current_x1, current_x2) {
+    function snap_x_bounds(this_node, x, current_x1, current_x2) {
         let j = d3.select(this_node).datum();
         let sx = sxs[j];
         let new_x1 = current_x1;
@@ -240,7 +252,7 @@ function draw_bottom_sliders(svg, splom) {
             new_x2 = x;
         }
         // update slider fg and splom
-        set_filter_bounds(j, new_x1, new_x2, sx, splom);
+        set_x_filter_bounds(j, new_x1, new_x2, sx, splom);
     }
 
     let timeout = null; //to distinguish single and double click on the slider bar
@@ -250,9 +262,12 @@ function draw_bottom_sliders(svg, splom) {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
             let me = d3.select(this);
-            let x1 = +me.attr("x1");
-            let x2 = +me.attr("x2");
-            snap_bounds(this, event.layerX, x1, x2);
+            let j = me.datum();
+            let sx = sxs[j];
+            let x1 = sx.invert(+me.attr("x1"));
+            let x2 = sx.invert(+me.attr("x2"));
+            let x = sx.invert(event.layerX);
+            snap_x_bounds(this, x, x1, x2);
         }, 300); //  the delay (in milliseconds) for single click
     });
 
@@ -261,56 +276,285 @@ function draw_bottom_sliders(svg, splom) {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
             let j = d3.select(this).datum();
+            let sx = sxs[j];
             let fg = d3.select(sliders_fg.nodes()[j]);
-            let x1 = +fg.attr("x1");
-            let x2 = +fg.attr("x2");
-            snap_bounds(this, event.layerX, x1, x2);
+            let x1 = sx.invert(+fg.attr("x1"));
+            let x2 = sx.invert(+fg.attr("x2"));
+            let x = sx.invert(event.layerX);
+            snap_x_bounds(this, x, x1, x2);
         }, 300); //  the delay (in milliseconds) for single click
     });
 
-    function reset_bounds(this_node) {
+    function reset_x_bounds(this_node) {
         //get the x scale (sx)
         let j = d3.select(this_node).datum();
         let sx = sxs[j];
-        let new_x1 = sx.range()[0];
-        let new_x2 = sx.range()[1];
-        set_filter_bounds(j, new_x1, new_x2, sx, splom);
+        let new_x1 = sx.domain()[0];
+        let new_x2 = sx.domain()[1];
+        set_x_filter_bounds(j, new_x1, new_x2, sx, splom);
     }
 
     sliders_fg.on("dblclick", function (event) {
         //double click to reset slider min & max
         clearTimeout(timeout); // Clear the single-click timeout
-        reset_bounds(this);
+        reset_x_bounds(this);
     });
 
     sliders_bg.on("dblclick", function (event) {
         //double click to reset slider min & max
         clearTimeout(timeout); // Clear the single-click timeout
-        reset_bounds(this);
+        reset_x_bounds(this);
     });
 
     sliders_fg.call(
         d3.drag().on("drag", function (event) {
-            let dx = event.dx;
             let j = d3.select(this).datum();
             let sx = sxs[j];
+            let dx = sx.invert(event.dx) - sx.invert(0);
             //get current bounding values
             let me = d3.select(this);
-            let x1 = +me.attr("x1");
-            let x2 = +me.attr("x2");
-            let range = sx.range();
+            let x1 = sx.invert(+me.attr("x1"));
+            let x2 = sx.invert(+me.attr("x2"));
+            let domain = sx.domain();
             //bound dx value by the available space on both sides
-            dx = clip(dx, range[0] - x1, range[1] - x2);
+            dx = clip(dx, domain[0] - x1, domain[1] - x2);
             // update slider fg
             let new_x1 = x1 + dx;
             let new_x2 = x2 + dx;
-            set_filter_bounds(j, new_x1, new_x2, sx, splom);
+            set_x_filter_bounds(j, new_x1, new_x2, sx, splom);
         }),
     );
+    //sliders_fg.call(
+    //    d3.drag().on("drag", function (event) {
+    //        let dx = event.dx;
+    //        let j = d3.select(this).datum();
+    //        let sx = sxs[j];
+    //        //get current bounding values
+    //        let me = d3.select(this);
+    //        let x1 = +me.attr("x1");
+    //        let x2 = +me.attr("x2");
+    //        let range = sx.range();
+    //        //bound dx value by the available space on both sides
+    //        dx = clip(dx, range[0] - x1, range[1] - x2);
+    //        // update slider fg
+    //        let new_x1 = x1 + dx;
+    //        let new_x2 = x2 + dx;
+    //        set_x_filter_bounds(j, new_x1, new_x2, sx, splom);
+    //    }),
+    //);
 
     // todo tooltip
     //
 }
 
-function draw_side_sliders(svg, splom) {}
+function draw_side_sliders(svg, splom) {
+    //data
+    let splom_subplots = splom.subplots;
+    let n_rows = splom_subplots.length;
+
+    ////style
+    let control_size = 12;
+    let x_offset = 10;
+
+    // y scales of the slider follows the scale of SPLOM subplots
+    let y_offsets = cumulative_sum([
+        ...splom_subplots.map((row_subplots) => row_subplots[0].plot_height),
+    ]);
+    let sys = splom_subplots.map((row_subplots) => row_subplots[0].scales.sy);
+    let total_height = y_offsets[y_offsets.length - 1];
+
+    let g_sliders = svg
+        .selectAll("g.side_slider")
+        .data(d3.range(n_rows))
+        .join("g")
+        .attr("class", "side-slider")
+        .attr(
+            "transform",
+            (i) => `translate(${0}, ${total_height - y_offsets[i]})`,
+        );
+
+    //slider grey bg lines
+    let sliders_bg = g_sliders
+        .append("line")
+        .attr("class", "slider-bg")
+        .attr("stroke", "#aaa")
+        .attr("stroke-width", control_size * 0.6)
+        .attr("y1", (i) => sys[i](sys[i].domain()[0]))
+        .attr("y2", (i) => sys[i](sys[i].domain()[1]))
+        .attr("x1", x_offset)
+        .attr("x2", x_offset);
+
+    let sliders_fg = g_sliders
+        .append("line")
+        .attr("class", "side-slider-fg")
+        .attr("stroke", C[0])
+        .attr("stroke-width", control_size * 0.6)
+        .attr("y1", (i) => sys[i](sys[i].domain()[0]))
+        .attr("y2", (i) => sys[i](sys[i].domain()[1]))
+        .attr("x1", x_offset)
+        .attr("x2", x_offset);
+
+    let control_min = g_sliders
+        .append("circle")
+        .attr("class", "slider-control-min")
+        .attr("cx", x_offset)
+        .attr("cy", (i) => sys[i](sys[i].domain()[0]))
+        .call(style_control, control_size);
+
+    let control_max = g_sliders
+        .append("circle")
+        .attr("class", "slider-control-max")
+        .attr("cx", x_offset)
+        .attr("cy", (i) => sys[i](sys[i].domain()[1]))
+        .call(style_control, control_size);
+
+    //interactions
+    function set_y_filter_bounds(i, lower, upper, sy, splom) {
+        // inputs (lower, upper, sy) are in data domain scale
+        // update control
+        d3.select(control_min.nodes()[i]).attr("cy", sy(lower));
+        d3.select(control_max.nodes()[i]).attr("cy", sy(upper));
+        d3.select(sliders_fg.nodes()[i])
+            .attr("y1", sy(lower))
+            .attr("y2", sy(upper));
+        // update splom subplots
+        let dim = splom.dimensions[splom.row_attrs[i]];
+        let currentFilter = dim.currentFilter();
+        dim.filter([lower, upper]);
+        splom.highlight_brushed(
+            splom.data,
+            splom.subplots[0][0].scales.sc,
+            splom.cross,
+            splom.subplots,
+            splom.row_attrs,
+            splom.col_attrs,
+        );
+    }
+
+    control_min.call(
+        d3.drag().on("drag", function (event) {
+            let i = d3.select(this).datum();
+            let sy = sys[i];
+            let domain = sy.domain();
+            let y = sy.invert(event.y);
+            let y_upper = sy.invert(
+                +d3.select(control_max.nodes()[i]).attr("cy"),
+            );
+            let y_lower = clip(
+                y,
+                domain[0],
+                y_upper - (domain[1] - domain[0]) * 0.05,
+            );
+            set_y_filter_bounds(i, y_lower, y_upper, sy, splom);
+        }),
+    );
+
+    control_max.call(
+        d3.drag().on("drag", function (event) {
+            let i = d3.select(this).datum();
+            let sy = sys[i];
+            let domain = sy.domain();
+            let y = sy.invert(event.y);
+            let y_lower = sy.invert(
+                +d3.select(control_min.nodes()[i]).attr("cy"),
+            );
+            let y_upper = clip(
+                y,
+                y_lower + (domain[1] - domain[0]) * 0.05,
+                domain[1],
+            );
+            set_y_filter_bounds(i, y_lower, y_upper, sy, splom);
+        }),
+    );
+
+    //single and double click
+    function snap_y_bounds(this_node, y, current_y1, current_y2) {
+        //snap either lower or upper bound
+        //--- whichever closer to the current click ---
+        // to the current click
+        //inputs y, current_y1, current_y2 are in data domain scale
+        let i = d3.select(this_node).datum();
+        let sy = sys[i];
+        let new_y1 = current_y1;
+        let new_y2 = current_y2;
+        if (Math.abs(y - current_y1) < Math.abs(y - current_y2)) {
+            new_y1 = y;
+        } else {
+            new_y2 = y;
+        }
+        // update slider fg and splom
+        set_y_filter_bounds(i, new_y1, new_y2, sy, splom);
+    }
+
+    let timeout = null; //to distinguish single and double click on the slider bar
+
+    sliders_fg.on("click", function (event) {
+        // single click to snap min/max to the click
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            let me = d3.select(this);
+            let i = me.datum();
+            let sy = sys[i];
+            let y1 = sy.invert(+me.attr("y1"));
+            let y2 = sy.invert(+me.attr("y2"));
+            let y = sy.invert(event.layerY);
+            snap_y_bounds(this, y, y1, y2);
+        }, 300); //  the delay (in milliseconds) for single click
+    });
+
+    sliders_bg.on("click", function (event) {
+        // single click to snap min/max to the click
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            let i = d3.select(this).datum();
+            let sy = sys[i];
+            let fg = d3.select(sliders_fg.nodes()[i]);
+            let y1 = sy.invert(+fg.attr("y1"));
+            let y2 = sy.invert(+fg.attr("y2"));
+            let y = sy.invert(event.layerY);
+            snap_y_bounds(this, y, y1, y2);
+        }, 300); //  the delay (in milliseconds) for single click
+    });
+
+    function reset_y_bounds(this_node) {
+        //get the x scale (sx)
+        let i = d3.select(this_node).datum();
+        let sy = sys[i];
+        let new_y1 = sy.domain()[0];
+        let new_y2 = sy.domain()[1];
+        set_y_filter_bounds(i, new_y1, new_y2, sy, splom);
+    }
+
+    sliders_fg.on("dblclick", function (event) {
+        //double click to reset slider min & max
+        clearTimeout(timeout); // Clear the single-click timeout
+        reset_y_bounds(this);
+    });
+
+    sliders_bg.on("dblclick", function (event) {
+        //double click to reset slider min & max
+        clearTimeout(timeout); // Clear the single-click timeout
+        reset_y_bounds(this);
+    });
+
+    sliders_fg.call(
+        d3.drag().on("drag", function (event) {
+            let i = d3.select(this).datum();
+            let sy = sys[i];
+            let dy = sy.invert(event.dy) - sy.invert(0);
+            //get current bounding values
+            let me = d3.select(this);
+            let y1 = sy.invert(+me.attr("y1"));
+            let y2 = sy.invert(+me.attr("y2"));
+            let domain = sy.domain();
+            //bound dx value by the available space on both sides
+            dy = clip(dy, domain[0] - y1, domain[1] - y2);
+            // update slider fg
+            let new_y1 = y1 + dy;
+            let new_y2 = y2 + dy;
+            set_y_filter_bounds(i, new_y1, new_y2, sy, splom);
+        }),
+    );
+}
+
 export default {render};

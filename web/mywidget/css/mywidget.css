@@ -16,10 +16,13 @@ svg text {
     cursor: pointer;
 }
 
-.slider-fg {
+.bottom-slider-fg {
     cursor: ew-resize;
 }
 
+.side-slider-fg {
+    cursor: ns-resize;
+}
 .slider-bg {
     stroke-linecap: round;
 }
