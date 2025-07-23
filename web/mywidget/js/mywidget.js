@@ -26,14 +26,18 @@ function render({model, el}) {
 
     //data
     let data = model.get("data")["data"];
-    let category1 = Object.keys(data[0]).slice(0, 6);
-    let category2 = Object.keys(data[0]).slice(6, 18);
-    let category3 = Object.keys(data[0]).slice(18, 18 + 38);
-    let category4 = Object.keys(data[0]).slice(56);
+    let col_attrs = model.get("col_attrs");
+    let row_attrs = model.get("row_attrs");
+    let ui_width = model.get("width") || el.getBoundingClientRect().width;
+    let ui_height = model.get("height") || ui_width * 0.618;
+    // let category1 = Object.keys(data[0]).slice(0, 6);
+    // let category2 = Object.keys(data[0]).slice(6, 18);
+    // let category3 = Object.keys(data[0]).slice(18, 18 + 38);
+    // let category4 = Object.keys(data[0]).slice(56);
 
     //UI dimensions
-    let ui_width = el.getBoundingClientRect().width;
-    let ui_height = ui_width * 0.6;
+    // let ui_width = el.getBoundingClientRect().width;
+    // let ui_height = ui_width * 0.6;
     d3.select(el)
         .style("width", `${ui_width}px`)
         .style("height", `${ui_height}px`);
@@ -77,8 +81,8 @@ function render({model, el}) {
         subplot_padding_top: 0,
 
         s: (_) => 4,
-        col_attrs: category2.slice(0, 5),
-        row_attrs: category4.slice(0, 4),
+        col_attrs: col_attrs,
+        row_attrs: row_attrs,
 
         // kde_filters: [(d) => Math.random() > 0.5, (d) => Math.random() > 0.5],
         // x_tickvalues: linspace(0,1,4),
