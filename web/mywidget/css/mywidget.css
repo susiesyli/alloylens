@@ -9,3 +9,16 @@ svg text {
     font-family: sans-serif;
     font-size: 10pt;
 }
+
+.slider_control_min,
+.slider_control_max {
+    cursor: pointer;
+}
+
+.slider_fg {
+    cursor: ew-resize;
+}
+
+.slider_bg {
+    stroke-linecap: round;
+}

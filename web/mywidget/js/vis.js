@@ -1057,14 +1057,12 @@ export function splom_gl2(
 
                     //hide scatterplot x-axes tick text that are not on the bottom
                     if (i !== 0) {
-                        d3.select(frame)
-                            .selectAll(".x-axis .tick text")
-                            .style("display", "none");
+                        d3.select(frame).selectAll(".x-axis .tick text");
+                        // .style("display", "none");
                     }
                     if (j !== 0) {
-                        d3.select(frame)
-                            .selectAll(".y-axis .tick text")
-                            .style("display", "none");
+                        d3.select(frame).selectAll(".y-axis .tick text");
+                        // .style("display", "none");
                     } else {
                         d3.select(frame)
                             .selectAll(".y-axis .tick text")
@@ -1503,7 +1501,6 @@ function highlight_brushed(
         return [...color2gl(c), 1.0];
     };
     let colors = data.map((d) => sc_gl(d));
-    console.log("colors", colors);
     let depths = data.map((d) => (d.brushed ? 0.0 : 0.999)); //0=near, 1=far
     if (brush_highlight) {
         subplots.forEach((subplot_row, i) =>
