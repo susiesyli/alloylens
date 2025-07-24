@@ -30,24 +30,24 @@ function render({model, el}) {
     let data = model.get("data")["data"];
     let col_attrs = model.get("col_attrs");
     let row_attrs = model.get("row_attrs");
-    let ui_width = model.get("width") || el.getBoundingClientRect().width;
-    let ui_height = model.get("height") || ui_width * 0.618;
-    // let category1 = Object.keys(data[0]).slice(0, 6);
-    // let category2 = Object.keys(data[0]).slice(6, 18);
-    // let category3 = Object.keys(data[0]).slice(18, 18 + 38);
-    // let category4 = Object.keys(data[0]).slice(56);
 
     //UI dimensions
-    // let ui_width = el.getBoundingClientRect().width;
-    // let ui_height = ui_width * 0.6;
+    let ui_width = model.get("width") || el.getBoundingClientRect().width;
+    let ui_height = model.get("height") || ui_width * 0.618;
+
+    let subplot_width = model.get("subplot_width") || 400;
+    let subplot_height = model.get("subplot_height") || 300;
+
     d3.select(el)
         .style("width", `${ui_width}px`)
         .style("height", `${ui_height}px`);
 
     let side_bar_width = 30;
     let bottom_bar_height = 30;
-    let splom_width = ui_width - side_bar_width;
-    let splom_height = ui_height - bottom_bar_height;
+    let splom_container_width = ui_width - side_bar_width;
+    let splom_container_height = ui_height - bottom_bar_height;
+    let splom_width = col_attrs.length * subplot_width;
+    let splom_height = row_attrs.length * subplot_height;
 
     //UI start
     let root_div = d3
@@ -55,14 +55,21 @@ function render({model, el}) {
         .attr("class", "root-div ui-container")
         .style("position", "relative")
         .style("width", `${ui_width}px`)
-        .style("height", `${ui_height}px`);
-    // .style("background-color", "#eef");
+        .style("height", `${ui_height}px`)
+        .style("overflow", "scroll");
+
+    // let first_row_div = root_div
+    //     .append("div")
+    //     .attr("class", "first-row")
+    //     .style("width", `${ui_width}px`)
+    //     .style("height", `${splom_container_height}px`)
+    //     .style("position", "relative")
+    //     .style("overflow-x", "scroll")
+    //     .style("overflow-y", "scroll");
 
     let splom_container = root_div
         .append("div")
         .attr("class", "splom-container")
-        .style("width", `${splom_width}px`)
-        .style("height", `${splom_height}px`)
         .style("position", "absolute")
         .style("top", `${0}px`)
         .style("left", `${side_bar_width}px`);
@@ -96,29 +103,43 @@ function render({model, el}) {
         // stroke_width: 1.0
     });
 
-    //add bottom sliders
-    let bottom_sliders = root_div
-        .append("svg")
-        .attr("class", "bottom-slider")
-        .attr("width", splom_width)
-        .attr("height", bottom_bar_height)
-        .style("background", "#efe") //bg for layout debugging
-        .style("position", "absolute")
-        .style("left", `${bottom_bar_height}px`)
-        .style("top", `${splom_height}px`)
-        .call(draw_bottom_sliders, splom);
-
     //add side sliders
     let side_sliders = root_div
         .append("svg")
         .attr("class", "side-slider")
         .attr("width", side_bar_width)
         .attr("height", splom_height)
-        .style("background", "#efe") //bg for layout debugging
-        .style("position", "absolute")
+        .style("background", "white")
+        // .style("border", "0.1px solid red") // debugging
+        .style("position", "sticky")
         .style("left", `${0}px`)
-        .style("top", `${0}px`)
+        // .style("top", `${0}px`)
+        .style("z-index", `1`)
         .call(draw_side_sliders, splom);
+
+    //add bottom sliders
+    let bottom_sliders = root_div
+        .append("svg")
+        .attr("class", "bottom-slider")
+        .attr("width", splom_width)
+        .attr("height", bottom_bar_height)
+        .style("background", "white")
+        // .style("border", "0.1px solid blue") // debugging
+        .style("position", "sticky")
+        .style("left", `${bottom_bar_height}px`)
+        // .style("margin-top", `${splom_container_height}px`)
+        .style("bottom", "0px")
+        .call(draw_bottom_sliders, splom);
+
+    // let white_block = root_div
+    //     .append("div")
+    //     .style("background", `white`)
+    //     .style("width", `${side_bar_width}px`)
+    //     .style("height", `${bottom_bar_height}px`)
+    //     .style("position", "sticky")
+    //     .style("left", `${0}px`)
+    //     .style("bottom", `${0}px`)
+    //     .style("border", "1px dashed blue");
 
     el.appendChild(root_div.node());
 }

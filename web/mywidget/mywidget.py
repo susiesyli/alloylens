@@ -20,8 +20,11 @@ class MyWidget(anywidget.AnyWidget):
     data = Instance(pd.DataFrame).tag(sync=True, to_json=pandas2json)
     col_attrs = List([]).tag(sync=True)
     row_attrs = List([]).tag(sync=True)
-    width = traitlets.Int(0).tag(sync=True)
-    height = traitlets.Int(0).tag(sync=True)
+
+    width = traitlets.Float(0).tag(sync=True)
+    height = traitlets.Float(0).tag(sync=True)
+    subplot_width = traitlets.Float(0).tag(sync=True)
+    subplot_height = traitlets.Float(0).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
