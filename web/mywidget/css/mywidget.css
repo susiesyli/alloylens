@@ -8,6 +8,7 @@ svg text {
     user-select: none;
     font-family: sans-serif;
     font-size: 10pt;
+    fill: #667;
 }
 
 .slider-bg,
@@ -25,4 +26,15 @@ svg text {
 }
 .slider-bg {
     stroke-linecap: round;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.root-div::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.root-div {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
 }

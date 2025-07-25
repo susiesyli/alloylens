@@ -42,8 +42,8 @@ function render({model, el}) {
         .style("width", `${ui_width}px`)
         .style("height", `${ui_height}px`);
 
-    let side_bar_width = 30;
-    let bottom_bar_height = 30;
+    let side_bar_width = 90;
+    let bottom_bar_height = 50;
     let splom_container_width = ui_width - side_bar_width;
     let splom_container_height = ui_height - bottom_bar_height;
     let splom_width = col_attrs.length * subplot_width;
@@ -93,11 +93,16 @@ function render({model, el}) {
         col_attrs: col_attrs,
         row_attrs: row_attrs,
 
+        xticks: 4,
+        yticks: 4,
+        show_tick_texts: false,
         // kde_filters: [(d) => Math.random() > 0.5, (d) => Math.random() > 0.5],
         // x_tickvalues: linspace(0,1,4),
         // ticks: 10,
-        // wspace: 0.0,
-        // hspace: 0.0,
+        subplot_padding_left: 0,
+        subplot_padding_right: 12,
+        subplot_padding_top: 12,
+        subplot_padding_bottom: 0,
         // scales: { sc: (d) => C[1] },
         // stroke: "#fff",
         // stroke_width: 1.0
@@ -113,33 +118,25 @@ function render({model, el}) {
         // .style("border", "0.1px solid red") // debugging
         .style("position", "sticky")
         .style("left", `${0}px`)
-        // .style("top", `${0}px`)
-        .style("z-index", `1`)
+        .style("z-index", 1)
         .call(draw_side_sliders, splom);
 
     //add bottom sliders
     let bottom_sliders = root_div
         .append("svg")
         .attr("class", "bottom-slider")
-        .attr("width", splom_width)
+        .attr("width", splom_width + side_bar_width)
         .attr("height", bottom_bar_height)
         .style("background", "white")
         // .style("border", "0.1px solid blue") // debugging
         .style("position", "sticky")
-        .style("left", `${bottom_bar_height}px`)
-        // .style("margin-top", `${splom_container_height}px`)
-        .style("bottom", "0px")
+        // .style("left", `${side_bar_width}px`)
+        .style("left", `${0}px`)
+        .style("bottom", `${0}px`)
+        .style("z-index", 2)
+        .append("g")
+        .attr("transform", `translate(${side_bar_width}, 0)`)
         .call(draw_bottom_sliders, splom);
-
-    // let white_block = root_div
-    //     .append("div")
-    //     .style("background", `white`)
-    //     .style("width", `${side_bar_width}px`)
-    //     .style("height", `${bottom_bar_height}px`)
-    //     .style("position", "sticky")
-    //     .style("left", `${0}px`)
-    //     .style("bottom", `${0}px`)
-    //     .style("border", "1px dashed blue");
 
     el.appendChild(root_div.node());
 }
@@ -151,7 +148,7 @@ function draw_bottom_sliders(svg, splom) {
 
     //style
     let control_size = 12;
-    let y_offset = 10;
+    let y_offset = 30;
 
     // x scales of the slider follows the scale of SPLOM subplots
     let x_offsets = cumulative_sum([
@@ -161,7 +158,7 @@ function draw_bottom_sliders(svg, splom) {
     let sxs = splom_subplots[0].map((subplot, j) => subplot.scales.sx);
 
     let g_sliders = svg
-        .selectAll("g.bottom_slider")
+        .selectAll("g.bottom-slider")
         .data(d3.range(n_cols))
         .join("g")
         .attr("class", "bottom-slider")
@@ -187,6 +184,33 @@ function draw_bottom_sliders(svg, splom) {
         .attr("x2", (i) => sxs[i].range()[1])
         .attr("y1", y_offset)
         .attr("y2", y_offset);
+
+    let slider_axes = g_sliders
+        .append("g")
+        .attr("class", "slider-axis")
+        .attr("transform", `translate(${0},${y_offset + control_size / 2})`)
+        .style("z-index", 2)
+        .each(function (j) {
+            //follows the number of ticks on splom
+            let ticks = splom.subplots[0][j].frame.xticks;
+            console.log(ticks, "ticks");
+            let ax = d3
+                .axisBottom(sxs[j])
+                .ticks(ticks)
+                .tickSizeInner(-control_size);
+            let axis = d3.select(this).call(ax);
+            axis.selectAll("path.domain").remove();
+            axis.selectAll("g.tick line").attr("stroke", "#eee");
+        });
+
+    let slider_labels = g_sliders
+        .append("text")
+        .attr("x", (j) => {
+            return d3.mean(sxs[j].range());
+        })
+        .attr("y", y_offset - 12)
+        .style("text-anchor", "middle")
+        .text((j) => splom.col_attrs[j]);
 
     let control_min = g_sliders
         .append("circle")
@@ -345,24 +369,6 @@ function draw_bottom_sliders(svg, splom) {
             set_x_filter_bounds(j, new_x1, new_x2, sx, splom);
         }),
     );
-    //sliders_fg.call(
-    //    d3.drag().on("drag", function (event) {
-    //        let dx = event.dx;
-    //        let j = d3.select(this).datum();
-    //        let sx = sxs[j];
-    //        //get current bounding values
-    //        let me = d3.select(this);
-    //        let x1 = +me.attr("x1");
-    //        let x2 = +me.attr("x2");
-    //        let range = sx.range();
-    //        //bound dx value by the available space on both sides
-    //        dx = clip(dx, range[0] - x1, range[1] - x2);
-    //        // update slider fg
-    //        let new_x1 = x1 + dx;
-    //        let new_x2 = x2 + dx;
-    //        set_x_filter_bounds(j, new_x1, new_x2, sx, splom);
-    //    }),
-    //);
 
     // todo tooltip
     //
@@ -375,7 +381,7 @@ function draw_side_sliders(svg, splom) {
 
     ////style
     let control_size = 12;
-    let x_offset = 10;
+    let x_offset = 60;
 
     // y scales of the slider follows the scale of SPLOM subplots
     let y_offsets = cumulative_sum([
@@ -428,6 +434,36 @@ function draw_side_sliders(svg, splom) {
         .attr("cx", x_offset)
         .attr("cy", (i) => sys[i](sys[i].domain()[1]))
         .call(style_control, control_size);
+
+    let slider_axes = g_sliders
+        .append("g")
+        .attr("class", "slider-axis")
+        .attr("transform", `translate(${x_offset - control_size / 2}, 0)`)
+        .style("z-index", 2)
+        .each(function (i) {
+            //follows the number of ticks on splom
+            let ticks = splom.subplots[i][0].frame.yticks;
+            let ay = d3
+                .axisLeft(sys[i])
+                .ticks(ticks)
+                .tickSizeInner(-control_size);
+            let axis = d3.select(this).call(ay);
+            axis.selectAll("path.domain").remove();
+            axis.selectAll("g.tick line").attr("stroke", "#eee");
+        });
+
+    let slider_labels = g_sliders
+        .append("text")
+        .attr("y", (i) => {
+            return d3.mean(sys[i].range());
+        })
+        .attr("x", x_offset + 20)
+        .attr(
+            "transform",
+            (i) => `rotate(-90 ${x_offset + 20} ${d3.mean(sys[i].range())})`,
+        )
+        .style("text-anchor", "middle")
+        .text((i) => splom.row_attrs[i]);
 
     //interactions
     function set_y_filter_bounds(i, lower, upper, sy, splom) {

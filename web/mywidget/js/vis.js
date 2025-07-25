@@ -461,6 +461,10 @@ function scatter_frame(
 
     let return_node = container.node();
     return_node.scales = container.scales;
+    return_node.ax = container.ax;
+    return_node.ay = container.ay;
+    return_node.xticks = xticks;
+    return_node.yticks = yticks;
     return return_node;
 }
 
@@ -748,7 +752,7 @@ export function splom_gl2(
         subplot_padding_right = 0,
         subplot_padding_top = 0,
         subplot_padding_bottom = 20,
-
+        //alternatively
         // wspace = 1, //The amount of width reserved for space between subplots. Similar to pyplot
         // hspace = 0.1,
 
@@ -758,6 +762,7 @@ export function splom_gl2(
         is_log_scale = false,
         xticks = 5,
         yticks = 5,
+        show_tick_texts = true,
 
         //color styles,
         s = () => 5, //mark size,
@@ -1056,18 +1061,21 @@ export function splom_gl2(
                         .style("font-size", `${label_fontsize}px`);
 
                     //hide scatterplot x-axes tick text that are not on the bottom
-                    if (i !== 0) {
-                        d3.select(frame).selectAll(".x-axis .tick text");
-                        // .style("display", "none");
-                    }
-                    if (j !== 0) {
-                        d3.select(frame).selectAll(".y-axis .tick text");
-                        // .style("display", "none");
-                    } else {
+                    if (!show_tick_texts) {
+                        // if (i !== 0) {
+                        d3.select(frame)
+                            .selectAll(".x-axis .tick text")
+                            .style("display", "none");
+                        // }
+                        // if (j !== 0) {
                         d3.select(frame)
                             .selectAll(".y-axis .tick text")
-                            .attr("transform", "translate(-10,0)");
+                            .style("display", "none");
+                        // }
                     }
+                    d3.select(frame)
+                        .selectAll(".y-axis .tick text")
+                        .attr("transform", "translate(-10,0)");
 
                     // gl render here
                     let {sx, sy} = frame.scales; //updated sx, sy;
@@ -1890,6 +1898,7 @@ export function frame(
     let ax = d3
         .axisBottom(sx)
         .ticks(xticks)
+        // .tickFormat(d3.format(",.0f"))
         .tickSizeInner(-(height - padding_bottom - padding_top));
     if (x_tickvalues !== undefined) {
         ax.tickValues(x_tickvalues);
@@ -1904,6 +1913,7 @@ export function frame(
     let ay = d3
         .axisLeft(sy)
         .ticks(yticks)
+        // .tickFormat(d3.format(",.0f"))
         .tickSizeInner(-(width - padding_left - padding_right));
     if (y_tickvalues !== undefined) {
         ay.tickValues(y_tickvalues);
