@@ -13,6 +13,74 @@ function style_control(sel, control_size) {
 function render({model, el}) {
     console.log("model", model);
     console.log("el", el);
+
+    //data
+    let data = model.get("data")["data"];
+    let col_attrs = model.get("col_attrs");
+    let row_attrs = model.get("row_attrs");
+
+    //UI dimensions
+    let ui_width = model.get("width") || el.getBoundingClientRect().width;
+    let ui_height = model.get("height") || ui_width * 0.618;
+    let subplot_width = model.get("subplot_width") || 400;
+    let subplot_height = model.get("subplot_height") || 300;
+    
+    let side_bar_width = 90;
+    let bottom_bar_height = 50;
+    // let splom_container_width = ui_width - side_bar_width;
+    // let splom_container_height = ui_height - bottom_bar_height;
+    let splom_width = col_attrs.length * subplot_width;
+    let splom_height = row_attrs.length * subplot_height;
+
+    el.innerHTML = ""; // clear the element
+
+    d3.select(el)
+        .style("width", `${ui_width}px`)
+        .style("height", `${ui_height}px`);
+
+    // an outer wrapper + scrollable container
+    const wrapper = d3.create("div")
+        .style("position", "relative")
+        .style("width",    `${ui_width}px`);
+
+    const scrollable = wrapper.append("div")
+        .style("overflow", "auto")
+        .style("height",   `${ui_height}px`)
+        .node();
+    
+    // splom + side sliders 
+    let root_div = d3.create("div")
+        .style("position", "relative")
+        .style("width",  `${ui_width}px`)
+        .style("height", `${ui_height}px`);
+
+    let splom_container = root_div.append("div")
+        .style("position", "absolute")
+        .style("top", 0)
+        .style("left", `${side_bar_width}px`);
+
+    const splom = splom_gl2(splom_container, data, {
+        layout: "both",
+        width:  splom_width,
+        height: splom_height,
+        col_attrs, row_attrs,
+        subplot_padding_top: 12,
+        subplot_padding_right: 12,
+        s: (_) => 4,
+        xticks: 4, yticks: 4,
+        show_tick_texts: false
+    });
+
+    root_div.append("svg")
+        .attr("class","side-slider")
+        .attr("width",  side_bar_width)
+        .attr("height", splom_height)
+        .style("position","sticky")
+        .style("left","0px")
+        .style("z-index","1")
+        .call(draw_side_sliders, splom);
+
+
     // let button = document.createElement("button");
     // button.innerHTML = `count is ${model.get("value")}`;
     // button.addEventListener("click", () => {
@@ -26,37 +94,36 @@ function render({model, el}) {
     // el.classList.add("counter-widget");
     // el.appendChild(button);
 
-    //data
-    let data = model.get("data")["data"];
-    let col_attrs = model.get("col_attrs");
-    let row_attrs = model.get("row_attrs");
+    scrollable.appendChild(root_div.node());
 
-    //UI dimensions
-    let ui_width = model.get("width") || el.getBoundingClientRect().width;
-    let ui_height = model.get("height") || ui_width * 0.618;
+    // create bottom slider outside the scrollable area 
+    const bottomSliderSvg = d3.create("svg")
+        .attr("class", "bottom-slider")
+        .attr("width",  splom_width + side_bar_width)
+        .attr("height", bottom_bar_height)
+        .style("background", "white")
+        .style("position",   "sticky")
+        .style("bottom",     "0px")
+        .style("left",       `${side_bar_width}px`)
+        .style("z-index",    "2")
+        .call(draw_bottom_sliders, splom)
+        .node();
 
-    let subplot_width = model.get("subplot_width") || 400;
-    let subplot_height = model.get("subplot_height") || 300;
+    wrapper.node().appendChild(bottomSliderSvg);
 
-    d3.select(el)
-        .style("width", `${ui_width}px`)
-        .style("height", `${ui_height}px`);
+    el.appendChild(wrapper.node());
 
-    let side_bar_width = 90;
-    let bottom_bar_height = 50;
-    let splom_container_width = ui_width - side_bar_width;
-    let splom_container_height = ui_height - bottom_bar_height;
-    let splom_width = col_attrs.length * subplot_width;
-    let splom_height = row_attrs.length * subplot_height;
+   
 
-    //UI start
-    let root_div = d3
-        .create("div")
-        .attr("class", "root-div ui-container")
-        .style("position", "relative")
-        .style("width", `${ui_width}px`)
-        .style("height", `${ui_height}px`)
-        .style("overflow", "scroll");
+    // //UI start
+    // let  root_div= d3
+    //     .create("div")
+    //     .attr("class", "root-div ui-container")
+    //     .style("position", "relative")
+    //     .style("width", `${ui_width}px`)
+    //     .style("height", `${ui_height}px`)
+    //     .style("overflow", "scroll");
+        // .style("padding-bottom", `${bottom_bar_height}px`);
 
     // let first_row_div = root_div
     //     .append("div")
@@ -67,78 +134,79 @@ function render({model, el}) {
     //     .style("overflow-x", "scroll")
     //     .style("overflow-y", "scroll");
 
-    let splom_container = root_div
-        .append("div")
-        .attr("class", "splom-container")
-        .style("position", "absolute")
-        .style("top", `${0}px`)
-        .style("left", `${side_bar_width}px`);
+    // let splom_container = root_div
+    //     .append("div")
+    //     .attr("class", "splom-container")
+    //     .style("position", "absolute")
+    //     .style("top", `${0}px`)
+    //     .style("left", `${side_bar_width}px`);
 
-    let splom = splom_gl2(splom_container, data, {
-        layout: "both", //'upper', 'lower', or 'both',
-        histogram: true,
-        width: splom_width,
-        height: splom_height,
+    // let splom = splom_gl2(splom_container, data, {
+    //     layout: "both", //'upper', 'lower', or 'both',
+    //     histogram: true,
+    //     width: splom_width,
+    //     height: splom_height,
 
-        padding_left: 0,
-        padding_right: 0,
-        padding_bottom: 0,
-        padding_top: 0,
-        // subplot_padding_left: 0,
-        subplot_padding_right: 0,
-        // subplot_padding_bottom: 0,
-        subplot_padding_top: 0,
+    //     padding_left: 0,
+    //     padding_right: 0,
+    //     padding_bottom: 0,
+    //     padding_top: 0,
+    //     // subplot_padding_left: 0,
+    //     subplot_padding_right: 0,
+    //     // subplot_padding_bottom: 0,
+    //     subplot_padding_top: 0,
 
-        s: (_) => 4,
-        col_attrs: col_attrs,
-        row_attrs: row_attrs,
+    //     s: (_) => 4,
+    //     col_attrs: col_attrs,
+    //     row_attrs: row_attrs,
 
-        xticks: 4,
-        yticks: 4,
-        show_tick_texts: false,
-        // kde_filters: [(d) => Math.random() > 0.5, (d) => Math.random() > 0.5],
-        // x_tickvalues: linspace(0,1,4),
-        // ticks: 10,
-        subplot_padding_left: 0,
-        subplot_padding_right: 12,
-        subplot_padding_top: 12,
-        subplot_padding_bottom: 0,
-        // scales: { sc: (d) => C[1] },
-        // stroke: "#fff",
-        // stroke_width: 1.0
-    });
+    //     xticks: 4,
+    //     yticks: 4,
+    //     show_tick_texts: false,
+    //     // kde_filters: [(d) => Math.random() > 0.5, (d) => Math.random() > 0.5],
+    //     // x_tickvalues: linspace(0,1,4),
+    //     // ticks: 10,
+    //     subplot_padding_left: 0,
+    //     subplot_padding_right: 12,
+    //     subplot_padding_top: 12,
+    //     subplot_padding_bottom: 0,
+    //     // scales: { sc: (d) => C[1] },
+    //     // stroke: "#fff",
+    //     // stroke_width: 1.0
+    // });
 
-    //add side sliders
-    let side_sliders = root_div
-        .append("svg")
-        .attr("class", "side-slider")
-        .attr("width", side_bar_width)
-        .attr("height", splom_height)
-        .style("background", "white")
-        // .style("border", "0.1px solid red") // debugging
-        .style("position", "sticky")
-        .style("left", `${0}px`)
-        .style("z-index", 1)
-        .call(draw_side_sliders, splom);
+    // //add side sliders
+    // let side_sliders = root_div
+    //     .append("svg")
+    //     .attr("class", "side-slider")
+    //     .attr("width", side_bar_width)
+    //     .attr("height", splom_height)
+    //     .style("background", "white")
+    //     // .style("border", "0.1px solid red") // debugging
+    //     .style("position", "sticky")
+    //     .style("left", `${0}px`)
+    //     .style("z-index", 1)
+    //     .call(draw_side_sliders, splom);
 
-    //add bottom sliders
-    let bottom_sliders = root_div
-        .append("svg")
-        .attr("class", "bottom-slider")
-        .attr("width", splom_width + side_bar_width)
-        .attr("height", bottom_bar_height)
-        .style("background", "white")
-        // .style("border", "0.1px solid blue") // debugging
-        .style("position", "sticky")
-        // .style("left", `${side_bar_width}px`)
-        .style("left", `${0}px`)
-        .style("bottom", `${0}px`)
-        .style("z-index", 2)
-        .append("g")
-        .attr("transform", `translate(${side_bar_width}, 0)`)
-        .call(draw_bottom_sliders, splom);
+    // //add bottom sliders
+    // let bottom_sliders = root_div
+    //     .append("svg")
+    //     .attr("class", "bottom-slider")
+    //     .attr("width", splom_width + side_bar_width)
+    //     .attr("height", bottom_bar_height)
+    //     .style("background", "white")
+    //     // .style("border", "0.1px solid blue") // debugging
+    //     .style("position", "sticky")
+    //     .style("left", `${side_bar_width}px`) // uncomment if using x-axis for property 
+    //     // .style("left", `${0}px`) // uncomment if using y-axis for property 
+    //     .style("bottom", `${0}px`)
+    //     .style("z-index", 2)
+    //     // .append("g")
+    //     // .attr("transform", `translate(${side_bar_width}, 0)`)
+    //     // .attr("transform", `translate(0, 0)`)
+    //     .call(draw_bottom_sliders, splom);
 
-    el.appendChild(root_div.node());
+    // el.appendChild(root_div.node());
 }
 
 function draw_bottom_sliders(svg, splom) {
