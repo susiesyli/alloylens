@@ -20,20 +20,20 @@ const pyplot_cycles = [
 export const C = pyplot_cycles;
 
 let defaultTolerances = {
-  "CSC": 0.0831791,
-  "YS(MPa)": 22.768015000000002,
-  "hardness(Vickers)": 6.959309999999999,
-  "CTEvol(1/K)(20.0-300.0°C)": 1.301130000000001e-06,
-  "Density(g/cm3)": 0.010348999999999987,
-  "Volume(m3/mol)": 2.3100000000000002e-08,
-  "El.conductivity(S/m)": 405240.0,
-  "El. resistivity(ohm m)": 2.6418700000000005e-09,
-  "heat capacity(J/(mol K))": 0.04891000000000006,
-  "Therm.conductivity(W/(mK))": 4.8338,
-  "Therm. diffusivity(m2/s)": 1.5786400000000003e-06,
-  "Therm.resistivity(mK/W)": 0.00016417300000000002,
-  "Linear thermal expansion (1/K)(20.0-300.0°C)": 4.3599999999999993e-07,
-  "Technical thermal expansion (1/K)(20.0-300.0°C)": 3.9359000000000007e-07,
+    "CSC": 0.040979390000000004,
+    "YS(MPa)": 11.157009500000001,
+    "hardness(Vickers)": 3.3772665000000006,
+    "CTEvol(1/K)(20.0-300.0°C)": 6.369949999999999e-07,
+    "Density(g/cm3)": 0.005215500000000018,
+    "Volume(m3/mol)": 1.1289999999999938e-08,
+    "El.conductivity(S/m)": 204170.0,
+    "El. resistivity(ohm m)": 1.3238000000000003e-09,
+    "heat capacity(J/(mol K))": 0.024279999999999902,
+    "Therm.conductivity(W/(mK))": 2.4391000000000007,
+    "Therm. diffusivity(m2/s)": 7.950799999999999e-07,
+    "Therm.resistivity(mK/W)": 8.190400000000001e-05,
+    "Linear thermal expansion (1/K)(20.0-300.0°C)": 2.1401500000000003e-07,
+    "Technical thermal expansion (1/K)(20.0-300.0°C)": 1.9393000000000004e-07,
 };
 
 // --------------- data utils ---------------
