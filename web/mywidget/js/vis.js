@@ -6,8 +6,8 @@ import regl2 from "regl";
 
 // ------------ Constants ---------------
 const pyplot_cycles = [
-    "#1f77b4",
-    "#ff7f0e",
+    "#1f77b4", // use for strict match 
+    "#ff7f0e", // use for soft match (within tolerace)
     "#2ca02c",
     "#d62728",
     "#9467bd",
@@ -18,6 +18,23 @@ const pyplot_cycles = [
     "#17becf",
 ];
 export const C = pyplot_cycles;
+
+let defaultTolerances = {
+  "CSC": 0.0831791,
+  "YS(MPa)": 22.768015000000002,
+  "hardness(Vickers)": 6.959309999999999,
+  "CTEvol(1/K)(20.0-300.0°C)": 1.301130000000001e-06,
+  "Density(g/cm3)": 0.010348999999999987,
+  "Volume(m3/mol)": 2.3100000000000002e-08,
+  "El.conductivity(S/m)": 405240.0,
+  "El. resistivity(ohm m)": 2.6418700000000005e-09,
+  "heat capacity(J/(mol K))": 0.04891000000000006,
+  "Therm.conductivity(W/(mK))": 4.8338,
+  "Therm. diffusivity(m2/s)": 1.5786400000000003e-06,
+  "Therm.resistivity(mK/W)": 0.00016417300000000002,
+  "Linear thermal expansion (1/K)(20.0-300.0°C)": 4.3599999999999993e-07,
+  "Technical thermal expansion (1/K)(20.0-300.0°C)": 3.9359000000000007e-07,
+};
 
 // --------------- data utils ---------------
 export function normalize(d, vmin, vmax, eps = 1e-4) {
@@ -642,7 +659,7 @@ export function scatter_gl(
         .domain(sy.domain())
         .range([sy_svg2gl(sy.range()[0]), sy_svg2gl(sy.range()[1])]);
 
-    let sc = scales.sc || ((d) => C[0]);
+    let sc = scales.sc || ((d) => C[0]); // blue 
     let sc_gl = (d, i) => {
         let c = sc(d, i);
         return [...color2gl(c), 1.0];
@@ -1102,7 +1119,7 @@ export function splom_gl2(
                             pixel2clip_y(sy.range()[0] + top),
                             pixel2clip_y(sy.range()[1] + top),
                         ]);
-                    let sc = scales.sc || ((d) => C[0]);
+                    let sc = scales.sc || ((d) => C[0]); // blue 
                     let sc_gl = (d) => {
                         let c = sc(d);
                         return [...color2gl(c), 1.0];
@@ -1497,18 +1514,61 @@ function highlight_brushed(
 ) {
     // A sub-routine for splom_gl2() to record the brushed to data (via crossfilter)
     // and update the color in all sub-scatterplots
-
     data.forEach((d, i) => {
         d.brushed = cross.isElementFiltered(i);
     });
 
-    //new color scale (sc) by brushed
-    let highlight_sc = (d) => (d.brushed ? sc(d) : "#aaa");
+    // add in compute-soft-match-range 
+    const softRanges = {}; // the range for the specific attribute 
+    subplots.forEach((row, i) => {
+        row.forEach((subplot, j) => {
+            const sel = d3.brushSelection(subplot.g_brush.node());
+            if (sel) {
+                const attrX = col_attrs[j];
+                const attrY = row_attrs[i];
+                const [px0, py0] = sel[0];
+                const [px1, py1] = sel[1];
+                const { sx, sy } = subplot.scales;
+                const minX = sx.invert(px0);
+                const maxX = sx.invert(px1);
+                const minY = sy.invert(py0);
+                const maxY = sy.invert(py1);
+                softRanges[attrX] = [ minX, maxX ];
+                softRanges[attrY] = [ minY, maxY ];
+            }
+        })
+    })
+
+    // 3 possible cases: exact match (blue), soft match (orange), or reject (grey)
+    let highlight_sc = (d) => {
+        if (d.brushed) {
+            return sc(d);
+        }
+
+        // if not brushed, check if it is in the soft range
+        for (let attr in softRanges) {
+            const [min, max] = softRanges[attr];
+            const tol = defaultTolerances[attr] || 0.00; // fallback to 0
+            const v = d[attr];
+            if (v >= min - tol && v <= max + tol) {
+                console.log("found an orange soft match!"); // debug print 
+                return C[1]; // orange for soft match 
+            }
+        }
+        return "#aaa"; // gray for not brushed and not in soft range
+    };
+
     let sc_gl = (d) => {
         let c = highlight_sc(d);
         return [...color2gl(c), 1.0];
     };
-    let colors = data.map((d) => sc_gl(d));
+    
+    // let colors = data.map((d) => sc_gl(d));
+    const colors = data.map(d => {
+        const c = highlight_sc(d);
+        return [...color2gl(c), 1.0];
+    });
+
     let depths = data.map((d) => (d.brushed ? 0.0 : 0.999)); //0=near, 1=far
     if (brush_highlight) {
         subplots.forEach((subplot_row, i) =>
@@ -1614,7 +1674,7 @@ export function scatter(
         height = height || sel.attr("height") || 500;
     }
     let res = sel;
-    let sc = scales.sc || ((d, i) => C[0]);
+    let sc = scales.sc || ((d, i) => C[0]); // blue 
 
     let main = sel.append("g").attr("class", "scatter");
     let bg = main.append("g").attr("class", "bg"); // g that draws frame (axes and ticks)
