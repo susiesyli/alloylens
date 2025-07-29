@@ -324,14 +324,17 @@ export function create_scatter_gl_program(regl) {
     attribute vec4 color;
     attribute float size;
     attribute float depth;
+    attribute float stroke_width;
     varying float v_size;
     varying vec4 v_color;
+    varying float v_stroke_width;
 
     void main() {
       gl_Position = vec4(position, depth, 1.0);
       gl_PointSize = size;
       v_color = color;
       v_size = size;
+      v_stroke_width = stroke_width;
     }`;
 
     let frag = `
@@ -339,7 +342,8 @@ export function create_scatter_gl_program(regl) {
     varying vec4 v_color;
     varying float v_size;
     uniform vec3 u_stroke;
-    uniform float u_stroke_width;
+    //uniform float u_stroke_width;
+    varying float v_stroke_width;
 
     void main() {
       float eps = 0.01;
@@ -350,8 +354,8 @@ export function create_scatter_gl_program(regl) {
         discard;
       gl_FragColor = v_color;
       gl_FragColor.a = 1.0;
-      if(u_stroke_width > 0.01){
-        float stroke = u_stroke_width / v_size; //normalized stroke width
+      if(v_stroke_width > 0.01){
+        float stroke = v_stroke_width / v_size; //normalized stroke width
         float mix_factor = smoothstep(1.0-stroke-eps, 1.0-stroke+eps, dist);
         gl_FragColor = mix( v_color, vec4(u_stroke, 1.0), mix_factor);
         float alpha = 1.0 - smoothstep(1.0-stroke+stroke*0.8, 1.0, dist);
@@ -367,10 +371,11 @@ export function create_scatter_gl_program(regl) {
             color: regl.prop("colors"),
             size: regl.prop("size"),
             depth: regl.prop("depth"),
+            stroke_width: regl.prop("stroke_width"),
         },
         uniforms: {
             u_stroke: regl.prop("stroke"),
-            u_stroke_width: regl.prop("stroke_width"),
+            // u_stroke_width: regl.prop("stroke_width"),
         },
         count: regl.prop("count"),
         primitive: "points",
@@ -850,6 +855,7 @@ export function splom_gl2(
         for (let attr of new Set(row_attrs.concat(col_attrs))) {
             dimensions[attr] = cross.dimension((d) => d[attr]);
         }
+        cross.dimensions = dimensions;
     }
 
     function draw_subplots() {
@@ -1341,13 +1347,17 @@ export function splom_gl2(
                             count: data.length,
                             size: plot.size,
                             stroke: color2gl(stroke),
-                            stroke_width:
-                                stroke_width * window.devicePixelRatio,
+                            stroke_width: data.map(
+                                (_) => stroke_width * window.devicePixelRatio,
+                            ),
                             depth: data.map((d, i) => depth(d, i)),
                         });
                     };
 
-                    plot.recolor_data = (colors, {depths}) => {
+                    plot.recolor_data = (
+                        colors,
+                        {depths = undefined, stroke_widths = undefined} = {},
+                    ) => {
                         let recolor_data = {
                             positions: plot.positions,
                             size: plot.size,
@@ -1355,14 +1365,27 @@ export function splom_gl2(
                             count: data.length,
                             stroke: color2gl(stroke),
                             stroke_width:
-                                stroke_width * window.devicePixelRatio,
+                                stroke_widths !== undefined
+                                    ? stroke_widths.map(
+                                          (d) => d * window.devicePixelRatio,
+                                      )
+                                    : data.map(
+                                          (_) =>
+                                              stroke_width *
+                                              window.devicePixelRatio,
+                                      ),
                             depth: depths || data.map((d, i) => depth(d, i)),
                         };
                         return recolor_data;
                     };
 
-                    plot.recolor = (colors, {depths} = {}) => {
-                        _render(plot.recolor_data(colors, {depths}));
+                    plot.recolor = (
+                        colors,
+                        {depths = undefined, stroke_widths = undefined} = {},
+                    ) => {
+                        _render(
+                            plot.recolor_data(colors, {depths, stroke_widths}),
+                        );
                     };
 
                     plot.render(data);
@@ -1391,6 +1414,7 @@ export function splom_gl2(
     };
 
     return_node.highlight_brushed = highlight_brushed;
+    return_node.highlight_brushed_2 = highlight_brushed_2;
     // the entire splom recolor
     return_node.recolor = (colors, {depths} = {}) => {
         return_node.clear();
@@ -1486,6 +1510,87 @@ export function splom_gl2(
     return return_node;
 }
 
+function point_on_cuboid(d, attrs, dimensions) {
+    let p = attrs.map((attr) => {
+        let bound = dimensions[attr].currentFilter();
+        if (bound !== undefined) {
+            return clip(d[attr], bound[0], bound[1]);
+        } else {
+            return d[attr];
+        }
+    });
+    p = Object.fromEntries(zip(attrs, p));
+    return p;
+}
+
+function distance_to_cuboid(d, attrs, dimensions, attr_extents) {
+    let poc = point_on_cuboid(d, attrs, dimensions);
+    let dist = d3.sum(
+        attrs.map((attr) => {
+            let [vmin, vmax] = attr_extents[attr];
+            let p0_xi = (d[attr] - vmin) / (vmax - vmin + 1e-4);
+            let p1_xi = (poc[attr] - vmin) / (vmax - vmin + 1e-4);
+            return Math.pow(p0_xi - p1_xi, 2);
+        }),
+    );
+    return dist;
+}
+
+function highlight_brushed_2(data, sc, cross, subplots, row_attrs, col_attrs) {
+    // A sub-routine for splom_gl2() to record the brushed to data (via crossfilter)
+    // and update the color in all sub-scatterplots
+    //
+    let filter_nonempty = cross.allFiltered().length > 0;
+    if (filter_nonempty) {
+        highlight_brushed(data, sc, cross, subplots, row_attrs, col_attrs);
+    } else {
+        // filter returns no data points
+        // color points by distance to the filter box
+        let all_attrs = row_attrs.concat(col_attrs);
+        let attr_extents = Object.fromEntries(
+            zip(
+                all_attrs,
+                all_attrs.map((a) => d3.extent(data, (d) => d[a])),
+            ),
+        );
+        data.forEach((d, i) => {
+            d.brushed = cross.isElementFiltered(i);
+            d.dist = distance_to_cuboid(
+                d,
+                all_attrs,
+                cross.dimensions,
+                attr_extents,
+            );
+        });
+
+        let [vmin, vmax] = d3.extent(data, (d) => d.dist);
+        let color_reach = 0.05; // 0-1 color reachability
+        // color scale (sc) by distance to the filter box
+        sc = d3
+            .scaleLinear()
+            .domain([vmin, vmin + color_reach * (vmax - vmin)])
+            .range(["green", "#aaa"])
+            .interpolate(d3.interpolateHcl)
+            .clamp(true);
+        let sc_gl = (d) => {
+            let c = sc(d.dist);
+            return [...color2gl(c), 1.0];
+        };
+        let colors = data.map((d) => sc_gl(d));
+        let depths = data.map((d, i) => (d.dist - vmin) / (vmax - vmin + 1e-4)); //-1=near, 1=far
+        let stroke_widths = data.map((d, i) =>
+            d.dist > vmin + color_reach * (vmax - vmin) ? 0 : 1,
+        );
+        subplots.forEach((subplot_row, i) =>
+            subplot_row.forEach((subplot, j) => {
+                if (row_attrs[i] !== col_attrs[j]) {
+                    subplot.recolor(colors, {depths, stroke_widths});
+                }
+            }),
+        );
+    }
+}
+
 function highlight_brushed(
     data,
     sc,
@@ -1509,12 +1614,13 @@ function highlight_brushed(
         return [...color2gl(c), 1.0];
     };
     let colors = data.map((d) => sc_gl(d));
-    let depths = data.map((d) => (d.brushed ? 0.0 : 0.999)); //0=near, 1=far
+    let depths = data.map((d, i) => (d.brushed ? -i / data.length : 0.0)); //-1=near, 1=far
+    let stroke_widths = data.map((d, i) => (d.brushed ? 1 : 0));
     if (brush_highlight) {
         subplots.forEach((subplot_row, i) =>
             subplot_row.forEach((subplot, j) => {
                 if (row_attrs[i] !== col_attrs[j]) {
-                    subplot.recolor(colors, {depths});
+                    subplot.recolor(colors, {depths, stroke_widths});
                 }
             }),
         );

@@ -85,9 +85,9 @@ function render({model, el}) {
         padding_bottom: 0,
         padding_top: 0,
         // subplot_padding_left: 0,
-        subplot_padding_right: 0,
+        // subplot_padding_right: 0,
         // subplot_padding_bottom: 0,
-        subplot_padding_top: 0,
+        // subplot_padding_top: 0,
 
         s: (_) => 4,
         col_attrs: col_attrs,
@@ -238,7 +238,7 @@ function draw_bottom_sliders(svg, splom) {
         let dim = splom.dimensions[splom.col_attrs[j]];
         let currentFilter = dim.currentFilter();
         dim.filter([lower, upper]);
-        splom.highlight_brushed(
+        splom.highlight_brushed_2(
             splom.data,
             splom.subplots[0][0].scales.sc,
             splom.cross,
@@ -478,7 +478,7 @@ function draw_side_sliders(svg, splom) {
         let dim = splom.dimensions[splom.row_attrs[i]];
         let currentFilter = dim.currentFilter();
         dim.filter([lower, upper]);
-        splom.highlight_brushed(
+        splom.highlight_brushed_2(
             splom.data,
             splom.subplots[0][0].scales.sc,
             splom.cross,
