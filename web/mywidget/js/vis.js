@@ -1569,7 +1569,7 @@ function highlight_brushed_2(data, sc, cross, subplots, row_attrs, col_attrs) {
         sc = d3
             .scaleLinear()
             .domain([vmin, vmin + color_reach * (vmax - vmin)])
-            .range(["green", "#aaa"])
+            .range([C[1], "#aaa"])
             .interpolate(d3.interpolateHcl)
             .clamp(true);
         let sc_gl = (d) => {
