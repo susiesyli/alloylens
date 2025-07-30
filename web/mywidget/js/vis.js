@@ -768,6 +768,7 @@ export function splom_gl2(
         xticks = 5,
         yticks = 5,
         show_tick_texts = true,
+        show_axis_label = true,
 
         //color styles,
         s = () => 5, //mark size,
@@ -1065,6 +1066,10 @@ export function splom_gl2(
                     d3.select(frame)
                         .selectAll("text")
                         .style("font-size", `${label_fontsize}px`);
+                    if (!show_axis_label) {
+                        d3.select(frame).selectAll("text.xlabel").remove();
+                        d3.select(frame).selectAll("text.ylabel").remove();
+                    }
 
                     //hide scatterplot x-axes tick text that are not on the bottom
                     if (!show_tick_texts) {
@@ -1564,7 +1569,7 @@ function highlight_brushed_2(data, sc, cross, subplots, row_attrs, col_attrs) {
         });
 
         let [vmin, vmax] = d3.extent(data, (d) => d.dist);
-        let color_reach = 0.05; // 0-1 color reachability
+        let color_reach = 0.01; // 0-1 color reachability
         // color scale (sc) by distance to the filter box
         sc = d3
             .scaleLinear()

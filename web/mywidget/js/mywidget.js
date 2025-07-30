@@ -32,24 +32,42 @@ function render({model, el}) {
     let row_attrs = model.get("row_attrs");
 
     //UI dimensions
-    let ui_width = model.get("width") || el.getBoundingClientRect().width;
-    let ui_height = model.get("height") || ui_width * 0.618;
-
-    let subplot_width = model.get("subplot_width") || 400;
-    let subplot_height = model.get("subplot_height") || 300;
-
-    d3.select(el)
-        .style("width", `${ui_width}px`)
-        .style("height", `${ui_height}px`);
-
     let side_bar_width = 90;
     let bottom_bar_height = 50;
+    let subplot_width = model.get("subplot_width") || 200;
+    let subplot_height = model.get("subplot_height") || 200;
+
+    let ui_width =
+        model.get("width") ||
+        Math.min(
+            subplot_width * col_attrs.length + side_bar_width,
+            el.getBoundingClientRect().width,
+        );
+    let ui_height =
+        model.get("height") ||
+        Math.min(
+            subplot_height * row_attrs.length + bottom_bar_height,
+            ui_width * 0.618,
+        );
+
     let splom_container_width = ui_width - side_bar_width;
     let splom_container_height = ui_height - bottom_bar_height;
     let splom_width = col_attrs.length * subplot_width;
     let splom_height = row_attrs.length * subplot_height;
 
     //UI start
+    // <div (el)>
+    //   <div class="root-div ui-container">
+    //     <div class="splom-container"> SPLOM things </div>
+    //     <svg class="side-slider"> </svg>
+    //     <svg class="bottom-slider"> </svg>
+    //   </div>
+    // </div>
+    //
+    d3.select(el)
+        .style("width", `${ui_width}px`)
+        .style("height", `${ui_height}px`);
+
     let root_div = d3
         .create("div")
         .attr("class", "root-div ui-container")
@@ -57,15 +75,6 @@ function render({model, el}) {
         .style("width", `${ui_width}px`)
         .style("height", `${ui_height}px`)
         .style("overflow", "scroll");
-
-    // let first_row_div = root_div
-    //     .append("div")
-    //     .attr("class", "first-row")
-    //     .style("width", `${ui_width}px`)
-    //     .style("height", `${splom_container_height}px`)
-    //     .style("position", "relative")
-    //     .style("overflow-x", "scroll")
-    //     .style("overflow-y", "scroll");
 
     let splom_container = root_div
         .append("div")
@@ -84,10 +93,10 @@ function render({model, el}) {
         padding_right: 0,
         padding_bottom: 0,
         padding_top: 0,
-        // subplot_padding_left: 0,
-        // subplot_padding_right: 0,
-        // subplot_padding_bottom: 0,
-        // subplot_padding_top: 0,
+        subplot_padding_left: 0,
+        subplot_padding_right: 12,
+        subplot_padding_top: 6,
+        subplot_padding_bottom: 6,
 
         s: (_) => 4,
         col_attrs: col_attrs,
@@ -95,14 +104,10 @@ function render({model, el}) {
 
         xticks: 4,
         yticks: 4,
+
         show_tick_texts: false,
-        // kde_filters: [(d) => Math.random() > 0.5, (d) => Math.random() > 0.5],
-        // x_tickvalues: linspace(0,1,4),
-        // ticks: 10,
-        subplot_padding_left: 0,
-        subplot_padding_right: 12,
-        subplot_padding_top: 12,
-        subplot_padding_bottom: 0,
+        show_axis_label: false,
+
         // scales: { sc: (d) => C[1] },
         // stroke: "#fff",
         // stroke_width: 1.0
@@ -114,7 +119,7 @@ function render({model, el}) {
         .attr("class", "side-slider")
         .attr("width", side_bar_width)
         .attr("height", splom_height)
-        .style("background", "white")
+        // .style("background", "white")
         // .style("border", "0.1px solid red") // debugging
         .style("position", "sticky")
         .style("left", `${0}px`)
@@ -127,7 +132,7 @@ function render({model, el}) {
         .attr("class", "bottom-slider")
         .attr("width", splom_width + side_bar_width)
         .attr("height", bottom_bar_height)
-        .style("background", "white")
+        // .style("background", "white")
         // .style("border", "0.1px solid blue") // debugging
         .style("position", "sticky")
         // .style("left", `${side_bar_width}px`)
