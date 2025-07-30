@@ -6,11 +6,11 @@ import regl2 from "regl";
 
 // ------------ Constants ---------------
 const pyplot_cycles = [
-    "#1f77b4", // use for strict match 
-    "#ff7f0e", // use for soft match (within tolerace)
+    "#1f77b4", // C[0] use for strict match 
+    "#ff7f0e", // C[1]: nearest neighbor 
     "#2ca02c",
     "#d62728",
-    "#9467bd",
+    "#9467bd", // C[4]: tolerance margin 
     "#8c564b",
     "#e377c2",
     "#7f7f7f",
@@ -1552,7 +1552,7 @@ function highlight_brushed(
             const v = d[attr];
             if (v >= min - tol && v <= max + tol) {
                 console.log("found an orange soft match!"); // debug print 
-                return C[1]; // orange for soft match 
+                return C[4]; // purple for soft match 
             }
         }
         return "#aaa"; // gray for not brushed and not in soft range
