@@ -33,7 +33,7 @@ function render({model, el}) {
 
     //UI dimensions
     let side_bar_width = 90;
-    let bottom_bar_height = 50;
+    let bottom_bar_height = 90;
     let subplot_width = model.get("subplot_width") || 200;
     let subplot_height = model.get("subplot_height") || 200;
 
@@ -102,8 +102,8 @@ function render({model, el}) {
         col_attrs: col_attrs,
         row_attrs: row_attrs,
 
-        xticks: 4,
-        yticks: 4,
+        xticks: 3,
+        yticks: 3,
 
         show_tick_texts: false,
         show_axis_label: false,
@@ -198,14 +198,16 @@ function draw_bottom_sliders(svg, splom) {
         .each(function (j) {
             //follows the number of ticks on splom
             let ticks = splom.subplots[0][j].frame.xticks;
-            console.log(ticks, "ticks");
             let ax = d3
                 .axisBottom(sxs[j])
                 .ticks(ticks)
+                .tickFormat(d3.format(".3s"))
                 .tickSizeInner(-control_size);
             let axis = d3.select(this).call(ax);
             axis.selectAll("path.domain").remove();
             axis.selectAll("g.tick line").attr("stroke", "#eee");
+            //rotate tick text
+            // axis.selectAll("g.tick text").attr("transform", "rotate(15 -10 0)");
         });
 
     let slider_labels = g_sliders
@@ -451,6 +453,7 @@ function draw_side_sliders(svg, splom) {
             let ay = d3
                 .axisLeft(sys[i])
                 .ticks(ticks)
+                // .tickFormat(d3.format(".3s"))
                 .tickSizeInner(-control_size);
             let axis = d3.select(this).call(ay);
             axis.selectAll("path.domain").remove();
