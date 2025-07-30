@@ -124,7 +124,7 @@ function render({model, el}) {
         .style("position", "sticky")
         .style("left", `${0}px`)
         .style("z-index", 1)
-        .call(draw_side_sliders, splom);
+        .call(draw_side_sliders, splom, model);
 
     //add bottom sliders
     let bottom_sliders = root_div
@@ -141,12 +141,12 @@ function render({model, el}) {
         .style("z-index", 2)
         .append("g")
         .attr("transform", `translate(${side_bar_width}, 0)`)
-        .call(draw_bottom_sliders, splom);
+        .call(draw_bottom_sliders, splom, model);
 
     el.appendChild(root_div.node());
 }
 
-function draw_bottom_sliders(svg, splom) {
+function draw_bottom_sliders(svg, splom, model) {
     //data
     let splom_subplots = splom.subplots;
     let n_cols = splom_subplots[0].length;
@@ -253,6 +253,16 @@ function draw_bottom_sliders(svg, splom) {
             splom.row_attrs,
             splom.col_attrs,
         );
+        //update widget output
+        model.set(
+            "selected",
+            splom.data.map((d) => d.brushed),
+        );
+        model.set(
+            "dists",
+            splom.data.map((d) => d.dist),
+        );
+        model.save_changes();
     }
 
     control_min.call(
@@ -381,7 +391,7 @@ function draw_bottom_sliders(svg, splom) {
     //
 }
 
-function draw_side_sliders(svg, splom) {
+function draw_side_sliders(svg, splom, model) {
     //data
     let splom_subplots = splom.subplots;
     let n_rows = splom_subplots.length;
@@ -494,6 +504,16 @@ function draw_side_sliders(svg, splom) {
             splom.row_attrs,
             splom.col_attrs,
         );
+        //update widget output
+        model.set(
+            "selected",
+            splom.data.map((d) => d.brushed),
+        );
+        model.set(
+            "dists",
+            splom.data.map((d) => d.dist),
+        );
+        model.save_changes();
     }
 
     control_min.call(

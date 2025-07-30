@@ -21,13 +21,18 @@ class MyWidget(anywidget.AnyWidget):
     col_attrs = List([]).tag(sync=True)
     row_attrs = List([]).tag(sync=True)
 
-    width = traitlets.Float(0).tag(sync=True)
-    height = traitlets.Float(0).tag(sync=True)
-    subplot_width = traitlets.Float(0).tag(sync=True)
-    subplot_height = traitlets.Float(0).tag(sync=True)
+    width = Float(0).tag(sync=True)
+    height = Float(0).tag(sync=True)
+    subplot_width = Float(0).tag(sync=True)
+    subplot_height = Float(0).tag(sync=True)
+
+    ## output / retunables from widget
+    selected = List([]).tag(sync=True)
+    dists = List([]).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        selected = [1, 2, 3]
         # print(self.col_attrs)
 
     def __repr__(self):

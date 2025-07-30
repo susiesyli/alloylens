@@ -1559,7 +1559,7 @@ function highlight_brushed_2(data, sc, cross, subplots, row_attrs, col_attrs) {
             ),
         );
         data.forEach((d, i) => {
-            d.brushed = cross.isElementFiltered(i);
+            // d.brushed = cross.isElementFiltered(i);
             d.dist = distance_to_cuboid(
                 d,
                 all_attrs,
@@ -1568,12 +1568,18 @@ function highlight_brushed_2(data, sc, cross, subplots, row_attrs, col_attrs) {
             );
         });
 
+        //recolor data points
         let [vmin, vmax] = d3.extent(data, (d) => d.dist);
-        let color_reach = 0.01; // 0-1 color reachability
+        let color_reach = 0.02; // 0-1 color reachability
+        //domain for color scale
+        let [cmin, cmax] = [vmin, vmin + color_reach * (vmax - vmin)];
+        data.forEach((d, i) => {
+            d.brushed = d.dist < cmax;
+        });
         // color scale (sc) by distance to the filter box
         sc = d3
             .scaleLinear()
-            .domain([vmin, vmin + color_reach * (vmax - vmin)])
+            .domain([cmin, cmax])
             .range([C[1], "#aaa"])
             .interpolate(d3.interpolateHcl)
             .clamp(true);
