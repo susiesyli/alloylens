@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 
-import {splom_gl2, C, cumulative_sum, clip} from "./vis.js";
+import {splom_gl2, C, cumulative_sum, clip, lines} from "./vis.js";
 
 function style_control(sel, control_size) {
     // stylize control circles
@@ -143,6 +143,47 @@ function render({model, el}) {
         .attr("transform", `translate(${side_bar_width}, 0)`)
         .call(draw_bottom_sliders, splom, model);
 
+    model.on("change:curves", function () {
+        let new_curves = model.get("curves");
+        console.log("new curves", new_curves);
+        let x_cols = model.get("x_cols");
+        let y_cols = model.get("y_cols");
+
+        // WIP draw curves
+        for (let i = 0; i < row_attrs.length; i++) {
+            for (let j = 0; j < col_attrs.length; j++) {
+                let line_data = new_curves[col_attrs[j]][row_attrs[i]];
+                console.log(
+                    "row",
+                    i,
+                    "col",
+                    j,
+                    "x",
+                    col_attrs[j],
+                    "y",
+                    row_attrs[i],
+                    "line_data",
+                    line_data,
+                );
+                let sx = splom.subplots[i][j].scales.sx;
+                let sy = splom.subplots[i][j].scales.sy;
+                // console.log("line x scale", sx.domain(), sx.range());
+                // console.log("line y scale", sy.domain(), sy.range());
+                splom.subplots[i][j].overlay.call(lines, [line_data], {
+                    x: (d) => d[0],
+                    y: (d) => d[1],
+                    scales: {sx: sx, sy: sy},
+                    stroke_width: 4,
+                    stroke: (line) => C[1],
+                    is_framed: false,
+                });
+            }
+        }
+        // // callback of x value change
+        // let new_x = model.get("x");
+        // data.forEach((d, i) => (d[0] = new_x[i]));
+        // sca.update_position(data);
+    });
     el.appendChild(root_div.node());
 }
 
@@ -201,7 +242,7 @@ function draw_bottom_sliders(svg, splom, model) {
             let ax = d3
                 .axisBottom(sxs[j])
                 .ticks(ticks)
-                .tickFormat(d3.format(".3s"))
+                // .tickFormat(d3.format(".3s"))
                 .tickSizeInner(-control_size);
             let axis = d3.select(this).call(ax);
             axis.selectAll("path.domain").remove();
@@ -463,7 +504,7 @@ function draw_side_sliders(svg, splom, model) {
             let ay = d3
                 .axisLeft(sys[i])
                 .ticks(ticks)
-                // .tickFormat(d3.format(".3s"))
+                .tickFormat(d3.format(".3s"))
                 .tickSizeInner(-control_size);
             let axis = d3.select(this).call(ay);
             axis.selectAll("path.domain").remove();

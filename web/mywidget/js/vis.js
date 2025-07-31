@@ -222,7 +222,7 @@ function gaussian_kernel(x, bandwidth = 1) {
 }
 
 // Draw multiple polylines
-function lines(
+export function lines(
     container = undefined,
     data = [
         // array of polylines, where each polyline containes array of nodes. e.g.,
@@ -302,6 +302,7 @@ function lines(
         .attr("fill", "none")
         .attr("stroke", stroke)
         .attr("stroke-width", stroke_width)
+        .attr("stroke-linecap", "round")
         .attr(
             "d",
             d3
