@@ -145,26 +145,16 @@ function render({model, el}) {
 
     model.on("change:curves", function () {
         let new_curves = model.get("curves");
-        console.log("new curves", new_curves);
+        // console.log("new curves", new_curves);
         let x_cols = model.get("x_cols");
         let y_cols = model.get("y_cols");
 
-        // WIP draw curves
         for (let i = 0; i < row_attrs.length; i++) {
             for (let j = 0; j < col_attrs.length; j++) {
                 let line_data = new_curves[col_attrs[j]][row_attrs[i]];
-                console.log(
-                    "row",
-                    i,
-                    "col",
-                    j,
-                    "x",
-                    col_attrs[j],
-                    "y",
-                    row_attrs[i],
-                    "line_data",
-                    line_data,
-                );
+                // console.log("row", i, "col", j);
+                // console.log("x", col_attrs[j], "y", row_attrs[i]);
+                // console.log("line_data", line_data);
                 let sx = splom.subplots[i][j].scales.sx;
                 let sy = splom.subplots[i][j].scales.sy;
                 // console.log("line x scale", sx.domain(), sx.range());
@@ -174,16 +164,38 @@ function render({model, el}) {
                     y: (d) => d[1],
                     scales: {sx: sx, sy: sy},
                     stroke_width: 4,
-                    stroke: (line) => C[1],
+                    stroke: (line) => C[2],
                     is_framed: false,
                 });
             }
         }
+
         // // callback of x value change
         // let new_x = model.get("x");
         // data.forEach((d, i) => (d[0] = new_x[i]));
         // sca.update_position(data);
     });
+
+    d3.select("body").on("keydown", function (event) {
+        const key = event.key;
+        const keyCode = event.keyCode;
+        //Key press ("s") toggles surrogate curve visibility.
+        if (key === "s") {
+            let surrogate = model.get("surrogate");
+            let new_surrogate = !surrogate;
+            model.set("surrogate", new_surrogate);
+            for (let i = 0; i < row_attrs.length; i++) {
+                for (let j = 0; j < col_attrs.length; j++) {
+                    splom.subplots[i][j].overlay
+                        .selectAll(".line")
+                        .attr("display", new_surrogate ? "" : "none");
+                }
+            }
+        }
+        console.log("Key pressed:", key, "Key code:", keyCode);
+        // Add your logic here based on the key press
+    });
+
     el.appendChild(root_div.node());
 }
 
