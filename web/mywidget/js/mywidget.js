@@ -223,6 +223,22 @@ function draw_bottom_sliders(svg, splom, model) {
     .attr("class", "bottom-slider")
     .attr("transform", (i) => `translate(${x_offsets[i]}, ${0})`);
 
+  const fmt = d3.format(".3~g");
+  const label_min = g_sliders
+    .append("text")
+    .attr("class", "bottom-range-min")
+    .attr("y", y_offset - 20)
+    .attr("text-anchor", "middle")
+    .style("font", "10px sans-serif")
+    .style("pointer-events", "none");
+  const label_max = g_sliders
+    .append("text")
+    .attr("class", "bottom-range-max")
+    .attr("y", y_offset - 20)
+    .attr("text-anchor", "middle")
+    .style("font", "10px sans-serif")
+    .style("pointer-events", "none");
+
   //slider grey bg lines
   let sliders_bg = g_sliders
     .append("line")
@@ -295,6 +311,12 @@ function draw_bottom_sliders(svg, splom, model) {
     d3.select(sliders_fg.nodes()[j])
       .attr("x1", sx(lower))
       .attr("x2", sx(upper));
+
+    // const cx1 = sx(lower),
+    //   cx2 = sx(upper);
+    d3.select(label_min.nodes()[j]).attr("x", sx(lower)).text(fmt(lower));
+    d3.select(label_max.nodes()[j]).attr("x", sx(upper)).text(fmt(upper));
+
     // update splom subplots
     let dim = splom.dimensions[splom.col_attrs[j]];
     let currentFilter = dim.currentFilter();
@@ -467,6 +489,30 @@ function draw_side_sliders(svg, splom, model) {
       (i) => `translate(${0}, ${total_height - y_offsets[i]})`,
     );
 
+  const fmt = d3.format(".3~g");
+  const label_min = g_sliders
+    .append("text")
+    .attr("class", "side-range-min")
+    .attr("x", x_offset - 60)
+    .attr("text-anchor", "start")
+    .style("font", "10px sans-serif")
+    .style("pointer-events", "none")
+    .style("paint-order", "stroke")
+    .style("stroke", "white")
+    .style("stroke-width", 2)
+    .style("stroke-linejoin", "round");
+  const label_max = g_sliders
+    .append("text")
+    .attr("class", "side-range-max")
+    .attr("x", x_offset - 60)
+    .attr("text-anchor", "start")
+    .style("font", "10px sans-serif")
+    .style("pointer-events", "none")
+    .style("paint-order", "stroke")
+    .style("stroke", "white")
+    .style("stroke-width", 2)
+    .style("stroke-linejoin", "round");
+
   //slider grey bg lines
   let sliders_bg = g_sliders
     .append("line")
@@ -542,6 +588,20 @@ function draw_side_sliders(svg, splom, model) {
     d3.select(sliders_fg.nodes()[i])
       .attr("y1", sy(lower))
       .attr("y2", sy(upper));
+
+    // added: update numeric label (midpoint between handles)
+    // const cy1 = sy(lower),
+    //   cy2 = sy(upper);
+    d3.select(label_min.nodes()[i])
+      .attr("y", sy(lower) + 3)
+      .text(fmt(lower));
+    d3.select(label_max.nodes()[i])
+      .attr("y", sy(upper) + 3)
+      .text(fmt(upper));
+    // d3.select(range_labels.nodes()[i])
+    //   .attr("y", (cy1 + cy2) / 2 + 3) // +3px for optical centering
+    //   .text(`${fmt(lower)} – ${fmt(upper)}`);
+
     // update splom subplots
     let dim = splom.dimensions[splom.row_attrs[i]];
     let currentFilter = dim.currentFilter();
