@@ -103,6 +103,7 @@ function render({model, el}) {
     col_attrs: col_attrs,
     row_attrs: row_attrs,
 
+    brush: false,
     xticks: 3,
     yticks: 3,
 
