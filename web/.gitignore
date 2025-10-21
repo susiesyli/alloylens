@@ -4,3 +4,5 @@ __pycache__/
 data/
 dataset/
 node_modules/
+mywidget/js-build/
+
