@@ -1,0 +1,14 @@
+{
+  "name": "alloylens-widget",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/alloylens/js/mywidget.js --bundle --format=esm --sourcemap --outfile=src/alloylens/js-build/mywidget.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "d3": "^7.9.0",
+    "crossfilter2": "^1.5.4",
+    "regl": "^2.1.0"
+  }
+}

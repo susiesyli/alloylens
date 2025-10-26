@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alloylens"
+version = "0.0.1"
+description = "Interactive SPLOM widget for high-throughput alloy inverse design"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+  "anywidget>=0.9.0",
+  "ipywidgets>=8",
+  "pandas>=1.5",
+  "numpy>=1.23",
+]
+
+# [project.urls]
+# Homepage = "https://github.com/pypa/sampleproject"
+# Issues = "https://github.com/pypa/sampleproject/issues"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+# Include non-Python files in the *wheel*:
+[tool.setuptools]
+include-package-data = true
+
+# Limit package data to the built assets (not node_modules, not raw js/)
+[tool.setuptools.package-data]
+alloylens = [
+  "css/*.css",
+  "js/*.js",
+  "js-build/*.js",
+]
