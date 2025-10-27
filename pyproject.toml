@@ -17,8 +17,8 @@ dependencies = [
   "numpy>=1.23",
 ]
 
-# [project.urls]
-# Homepage = "https://github.com/pypa/sampleproject"
+[project.urls]
+Homepage = "https://github.com/susiesyli/alloylens"
 # Issues = "https://github.com/pypa/sampleproject/issues"
 
 

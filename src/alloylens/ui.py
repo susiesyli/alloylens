@@ -94,14 +94,21 @@ class AlloyLensApp(W.VBox):
             ),
         )
 
+        # action buttons
         self._apply = W.Button(description="Apply", button_style="primary")
+        self._select_all = W.Button(description="Select all")
+        self._clear_all = W.Button(description="Clear all")
         self._out = W.Output()
 
+        # wire up actions
         self._apply.on_click(self._on_apply)
+        self._select_all.on_click(lambda _btn: self.select_all())
+        self._clear_all.on_click(lambda _btn: self.clear_all())
 
         # initial render
         header = W.Label("Select features to plot:")
-        self.children = (header, self._checkbox_box, self._apply, self._out)
+        controls = W.HBox([self._select_all, self._clear_all, self._apply], layout=W.Layout(gap="6px"))
+        self.children = (header, self._checkbox_box, controls, self._out)
 
         # expose the inner widget later (after first Apply)
         self.widget: Optional[AlloyLensWidget] = None

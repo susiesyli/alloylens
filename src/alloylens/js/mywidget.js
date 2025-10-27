@@ -322,6 +322,10 @@ function draw_bottom_sliders(svg, splom, model) {
       "dists",
       splom.data.map((d) => d.dist)
     );
+    const ids = splom.data
+      .map((d, i) => (d.brushed ? i : -1))
+      .filter((i) => i >= 0);
+    model.set("selected_indices", ids);
     model.save_changes();
   }
 
@@ -556,6 +560,10 @@ function draw_side_sliders(svg, splom, model) {
       "dists",
       splom.data.map((d) => d.dist)
     );
+    const ids = splom.data
+      .map((d, i) => (d.brushed ? i : -1))
+      .filter((i) => i >= 0);
+    model.set("selected_indices", ids);
     model.save_changes();
   }
 
