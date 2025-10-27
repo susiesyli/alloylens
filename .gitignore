@@ -3,6 +3,10 @@
 dist/
 node_modules/
 
+# package top-level files
+setup.py
+
+
 */dataset/
 */__pycache__/
 */node_modules/
@@ -15,3 +19,4 @@ node_modules/
 *.egg-info/
 *.pyc
 node_modules/
+.gitignore
