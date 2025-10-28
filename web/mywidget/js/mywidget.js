@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 
-import {splom_gl2, C, cumulative_sum, clip, lines} from "./vis.js";
+import { splom_gl2, C, cumulative_sum, clip, lines } from "./vis.js";
 
 function style_control(sel, control_size) {
   // stylize control circles
@@ -11,7 +11,7 @@ function style_control(sel, control_size) {
     .attr("r", control_size / 2);
 }
 
-function render({model, el}) {
+function render({ model, el }) {
   console.log("model", model);
   console.log("el", el);
   // let button = document.createElement("button");
@@ -42,13 +42,13 @@ function render({model, el}) {
     model.get("width") ||
     Math.min(
       subplot_width * col_attrs.length + side_bar_width,
-      el.getBoundingClientRect().width,
+      el.getBoundingClientRect().width
     );
   let ui_height =
     model.get("height") ||
     Math.min(
       subplot_height * row_attrs.length + bottom_bar_height,
-      ui_width * 0.618,
+      ui_width * 0.618
     );
 
   let splom_container_width = ui_width - side_bar_width;
@@ -164,7 +164,7 @@ function render({model, el}) {
         splom.subplots[i][j].overlay.call(lines, [line_data], {
           x: (d) => d[0],
           y: (d) => d[1],
-          scales: {sx: sx, sy: sy},
+          scales: { sx: sx, sy: sy },
           stroke_width: 4,
           stroke: (line) => C[1],
           is_framed: false,
@@ -328,16 +328,16 @@ function draw_bottom_sliders(svg, splom, model) {
       splom.cross,
       splom.subplots,
       splom.row_attrs,
-      splom.col_attrs,
+      splom.col_attrs
     );
     //update widget output
     model.set(
       "selected",
-      splom.data.map((d) => d.brushed),
+      splom.data.map((d) => d.brushed)
     );
     model.set(
       "dists",
-      splom.data.map((d) => d.dist),
+      splom.data.map((d) => d.dist)
     );
     model.save_changes();
   }
@@ -353,10 +353,10 @@ function draw_bottom_sliders(svg, splom, model) {
       let x_lower = clip(
         x,
         domain[0],
-        x_upper - (domain[1] - domain[0]) * 0.05,
+        x_upper - (domain[1] - domain[0]) * 0.05
       );
       set_x_filter_bounds(j, x_lower, x_upper, sx, splom);
-    }),
+    })
   );
 
   control_max.call(
@@ -369,10 +369,10 @@ function draw_bottom_sliders(svg, splom, model) {
       let x_upper = clip(
         x,
         x_lower + (domain[1] - domain[0]) * 0.05,
-        domain[1],
+        domain[1]
       );
       set_x_filter_bounds(j, x_lower, x_upper, sx, splom);
-    }),
+    })
   );
 
   //single and double click
@@ -457,7 +457,7 @@ function draw_bottom_sliders(svg, splom, model) {
       let new_x1 = x1 + dx;
       let new_x2 = x2 + dx;
       set_x_filter_bounds(j, new_x1, new_x2, sx, splom);
-    }),
+    })
   );
 
   // todo tooltip
@@ -487,7 +487,7 @@ function draw_side_sliders(svg, splom, model) {
     .attr("class", "side-slider")
     .attr(
       "transform",
-      (i) => `translate(${0}, ${total_height - y_offsets[i]})`,
+      (i) => `translate(${0}, ${total_height - y_offsets[i]})`
     );
 
   const fmt = d3.format(".3~g");
@@ -575,7 +575,7 @@ function draw_side_sliders(svg, splom, model) {
     .attr("x", x_offset + 20)
     .attr(
       "transform",
-      (i) => `rotate(-90 ${x_offset + 20} ${d3.mean(sys[i].range())})`,
+      (i) => `rotate(-90 ${x_offset + 20} ${d3.mean(sys[i].range())})`
     )
     .style("text-anchor", "middle")
     .text((i) => splom.row_attrs[i]);
@@ -613,16 +613,16 @@ function draw_side_sliders(svg, splom, model) {
       splom.cross,
       splom.subplots,
       splom.row_attrs,
-      splom.col_attrs,
+      splom.col_attrs
     );
     //update widget output
     model.set(
       "selected",
-      splom.data.map((d) => d.brushed),
+      splom.data.map((d) => d.brushed)
     );
     model.set(
       "dists",
-      splom.data.map((d) => d.dist),
+      splom.data.map((d) => d.dist)
     );
     model.save_changes();
   }
@@ -637,10 +637,10 @@ function draw_side_sliders(svg, splom, model) {
       let y_lower = clip(
         y,
         domain[0],
-        y_upper - (domain[1] - domain[0]) * 0.05,
+        y_upper - (domain[1] - domain[0]) * 0.05
       );
       set_y_filter_bounds(i, y_lower, y_upper, sy, splom);
-    }),
+    })
   );
 
   control_max.call(
@@ -653,10 +653,10 @@ function draw_side_sliders(svg, splom, model) {
       let y_upper = clip(
         y,
         y_lower + (domain[1] - domain[0]) * 0.05,
-        domain[1],
+        domain[1]
       );
       set_y_filter_bounds(i, y_lower, y_upper, sy, splom);
-    }),
+    })
   );
 
   //single and double click
@@ -745,8 +745,8 @@ function draw_side_sliders(svg, splom, model) {
       let new_y1 = y1 + dy;
       let new_y2 = y2 + dy;
       set_y_filter_bounds(i, new_y1, new_y2, sy, splom);
-    }),
+    })
   );
 }
 
-export default {render};
+export default { render };
