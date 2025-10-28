@@ -13,3 +13,26 @@ pip install alloylens
 ```
 
 ### Usage:
+
+```
+import alloylens as al
+
+# Load alloy dataset
+df = pd.read_csv("./Rapid_Alloy_development.txt")
+
+# Define feature groups
+all_cols = df.columns.tolist()
+element_cols = all_cols[6:18]
+microstructure_cols = all_cols[18:56]
+property_cols = all_cols[56:70]
+
+groups = {
+    "elements": element_cols,
+    "microstructures": microstructure_cols,
+    "properties": property_cols,
+}
+
+# Run alloylens
+app = al.AlloyLensApp(df, groups, x="elements", y="properties")
+app
+```
