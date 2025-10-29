@@ -130,7 +130,7 @@ const GROUPS = {
 
 // ----------------- init -----------------
 (async function init() {
-  raw = await d3.csv("data/sample.csv", d3.autoType);
+  raw = await d3.csv("./webapp/data/sample.csv", d3.autoType);
 
   // which columns are numeric?
   const first = raw[0] ?? {};
