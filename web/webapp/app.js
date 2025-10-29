@@ -1,325 +1,282 @@
-// import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7?module";
-import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7.9.0/+esm";
+// app.js
+import AlloyLensWidget from "./mywidget.js";
+import * as d3 from "https://esm.sh/d3@7.9.0";
 
-// import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7.9.0/+esm";
-// import { csv } from "https://cdn.jsdelivr.net/npm/d3-fetch@3/+esm";
+// ----------------- tiny widget-model shim -----------------
+class Model {
+  constructor(initial = {}) {
+    this.state = { ...initial };
+    this.listeners = {};
+  }
+  get(k) {
+    return this.state[k];
+  }
+  set(k, v) {
+    this.state[k] = v;
+    this._emit(`change:${k}`);
+  }
+  on(evt, cb) {
+    (this.listeners[evt] ??= []).push(cb);
+  }
+  save_changes() {}
+  _emit(evt) {
+    (this.listeners[evt] || []).forEach((cb) => cb());
+  }
+}
 
-// Simple SPLOM app that reproduces the checkbox UI from the notebook
-// Loads dataset/data_sample_2000.csv and creates checkboxes for numeric columns.
-
-const dataPath = "../dataset/data_sample_2000.csv";
-
-const checkboxContainer = document.getElementById("checkboxes");
-const applyBtn = document.getElementById("apply");
-const exportBtn = document.getElementById("export");
-const selectedCountSpan = document.getElementById("selected-count");
-const splomDiv = document.getElementById("splom");
+// ----------------- DOM refs -----------------
+const elListX = document.getElementById("list-x");
+const elListY = document.getElementById("list-y");
+const btnXAll = document.getElementById("x-select-all");
+const btnXClear = document.getElementById("x-clear");
+const btnYAll = document.getElementById("y-select-all");
+const btnYClear = document.getElementById("y-clear");
+const btnApply = document.getElementById("apply");
+const btnExport = document.getElementById("export");
+const spanCount = document.getElementById("selected-count");
 const plotInfo = document.getElementById("plot-info");
+const splomHost = document.getElementById("splom");
 
-let rawData = null;
-let numericCols = [];
-let currentSelected = new Set();
-let lastRenderedPoints = []; // store nodes with indexes for selection export
+// group toggles
+const groupXCheckboxes = Array.from(document.querySelectorAll(".group-x"));
+const groupYCheckboxes = Array.from(document.querySelectorAll(".group-y"));
 
-// load CSV, parse numbers when possible
-async function loadData() {
-  plotInfo.textContent = "Loading data...";
-  const rows = await d3.csv(dataPath, (row) => {
-    // convert fields that look numeric
-    const out = {};
-    for (const k of Object.keys(row)) {
-      const v = row[k];
-      // detect numbers (including scientific notation)
-      const n = v === "" ? NaN : +v;
-      out[k] = isFinite(n) ? n : v;
+// ----------------- data & categories -----------------
+let raw = [];
+let numericCols = new Set();
+let model = null;
+
+// Define column groups by header names (as in CSV)
+const GROUPS = {
+  inputs: [
+    "KS1295[%]",
+    "6082[%]",
+    "2024[%]",
+    "bat-box[%]",
+    "3003[%]",
+    "4032[%]",
+  ],
+  elements: [
+    "Al",
+    "Si",
+    "Cu",
+    "Ni",
+    "Mg",
+    "Mn",
+    "Fe",
+    "Cr",
+    "Ti",
+    "Zr",
+    "V",
+    "Zn",
+  ],
+  micro: [
+    "Vf_FCC_A1",
+    "Vf_DIAMOND_A4",
+    "Vf_AL15SI2M4",
+    "Vf_AL3X",
+    "Vf_AL6MN",
+    "Vf_MG2ZN3",
+    "Vf_AL3NI2",
+    "Vf_AL3NI_D011",
+    "Vf_AL7CU4NI",
+    "Vf_AL2CU_C16",
+    "Vf_Q_ALCUMGSI",
+    "Vf_AL7CU2FE",
+    "Vf_MG2SI_C1",
+    "Vf_AL9FE2SI2",
+    "Vf_AL18FE2MG7SI10",
+    "eut. frac.[%]",
+    "eut. T (°C)",
+    "T_FCC_A1",
+    "T_DIAMOND_A4",
+    "T_AL15SI2M4",
+    "T_AL3X",
+    "T_AL6MN",
+    "T_MG2ZN3",
+    "T_AL3NI2",
+    "T_AL3NI_D011",
+    "T_AL7CU4NI",
+    "T_AL2CU_C16",
+    "T_Q_ALCUMGSI",
+    "T_AL7CU2FE",
+    "T_MG2SI_C1",
+    "T_AL9FE2SI2",
+    "T_AL18FE2MG7SI10",
+    "T(liqu)",
+    "T(sol)",
+    "delta_T",
+    "delta_T_FCC",
+    "delta_T_Al15Si2M4",
+    "delta_T_Si",
+  ],
+  props: [
+    "CSC",
+    "YS(MPa)",
+    "hardness(Vickers)",
+    "CTEvol(1/K)(20.0-300.0°C)",
+    "Density(g/cm3)",
+    "Volume(m3/mol)",
+    "El.conductivity(S/m)",
+    "El. resistivity(ohm m)",
+    "heat capacity(J/(mol K))",
+    "Therm.conductivity(W/(mK))",
+    "Therm. diffusivity(m2/s)",
+    "Therm.resistivity(mK/W)",
+    "Linear thermal expansion (1/K)(20.0-300.0°C)",
+    "Technical thermal expansion (1/K)(20.0-300.0°C)",
+  ],
+};
+
+// ----------------- init -----------------
+(async function init() {
+  raw = await d3.csv("data/sample.csv", d3.autoType);
+
+  // which columns are numeric?
+  const first = raw[0] ?? {};
+  for (const k of Object.keys(first)) {
+    if (typeof first[k] === "number" && Number.isFinite(first[k])) {
+      numericCols.add(k);
     }
-    return out;
+  }
+
+  // default groups
+  checkGroups(groupXCheckboxes, ["elements"]); // X defaults
+  checkGroups(groupYCheckboxes, ["props"]); // Y defaults
+
+  // build feature lists for each axis
+  refreshAxisList("x");
+  refreshAxisList("y");
+
+  plotInfo.textContent = "Pick groups and features, then click Apply.";
+})();
+
+// ----------------- UI builders -----------------
+function checkGroups(checkboxNodes, keysToCheck) {
+  checkboxNodes.forEach((cb) => {
+    cb.checked = keysToCheck.includes(cb.dataset.group);
   });
-  rawData = rows;
-  plotInfo.textContent = `Loaded ${rows.length} rows.`;
-  detectNumericColumns();
-  buildCheckboxes();
 }
 
-function detectNumericColumns() {
-  if (!rawData || rawData.length === 0) return;
-  const cols = Object.keys(rawData[0]);
-  numericCols = cols.filter((c) => {
-    // check first 200 rows if value is number
-    let numCount = 0;
-    let checked = Math.min(200, rawData.length);
-    for (let i = 0; i < checked; i++) {
-      const v = rawData[i][c];
-      if (typeof v === "number" && !isNaN(v)) numCount++;
+function gatherGroupCols(axis) {
+  // axis: "x" | "y"
+  const cbs = axis === "x" ? groupXCheckboxes : groupYCheckboxes;
+  const selectedGroups = cbs
+    .filter((cb) => cb.checked)
+    .map((cb) => cb.dataset.group);
+  // flatten columns in those groups & keep only numeric columns present in CSV
+  const cols = [];
+  for (const g of selectedGroups) {
+    for (const col of GROUPS[g] || []) {
+      if (numericCols.has(col)) cols.push(col);
     }
-    return numCount / checked > 0.9; // >90% numeric
-  });
+  }
+  // dedupe while preserving order
+  return Array.from(new Set(cols));
 }
 
-function buildCheckboxes() {
-  checkboxContainer.innerHTML = "";
-  numericCols.forEach((col) => {
-    const id = `cb-${col.replace(/[^a-zA-Z0-9_]/g, "_")}`;
-    const wrapper = document.createElement("div");
-    wrapper.style.margin = "2px 0";
+function refreshAxisList(axis) {
+  const listEl = axis === "x" ? elListX : elListY;
+  const cols = gatherGroupCols(axis);
+  listEl.innerHTML = "";
+
+  // Build checkboxes for the visible columns in this axis
+  const frag = document.createDocumentFragment();
+  for (const c of cols) {
+    const label = document.createElement("label");
     const cb = document.createElement("input");
     cb.type = "checkbox";
-    cb.id = id;
-    cb.value = col;
-    const label = document.createElement("label");
-    label.htmlFor = id;
-    label.textContent = col;
-    wrapper.appendChild(cb);
-    wrapper.appendChild(label);
-    checkboxContainer.appendChild(wrapper);
-  });
+    cb.value = c;
+    cb.checked = false; // start unchecked
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(c));
+    frag.appendChild(label);
+  }
+  listEl.appendChild(frag);
 }
 
-function getSelectedCols() {
-  const boxes = checkboxContainer.querySelectorAll("input[type=checkbox]");
-  const sel = [];
-  boxes.forEach((b) => {
-    if (b.checked) sel.push(b.value);
-  });
-  return sel;
+// respond to group toggles
+groupXCheckboxes.forEach((cb) =>
+  cb.addEventListener("change", () => refreshAxisList("x"))
+);
+groupYCheckboxes.forEach((cb) =>
+  cb.addEventListener("change", () => refreshAxisList("y"))
+);
+
+// select/clear helpers
+btnXAll.addEventListener("click", () => {
+  elListX
+    .querySelectorAll('input[type="checkbox"]')
+    .forEach((cb) => (cb.checked = true));
+});
+btnXClear.addEventListener("click", () => {
+  elListX
+    .querySelectorAll('input[type="checkbox"]')
+    .forEach((cb) => (cb.checked = false));
+});
+btnYAll.addEventListener("click", () => {
+  elListY
+    .querySelectorAll('input[type="checkbox"]')
+    .forEach((cb) => (cb.checked = true));
+});
+btnYClear.addEventListener("click", () => {
+  elListY
+    .querySelectorAll('input[type="checkbox"]')
+    .forEach((cb) => (cb.checked = false));
+});
+
+function selectedFeaturesFromList(listEl) {
+  return Array.from(
+    listEl.querySelectorAll('input[type="checkbox"]:checked')
+  ).map((cb) => cb.value);
 }
 
-// create SPLOM with selected columns
-function renderSplom(cols) {
-  splomDiv.innerHTML = "";
-  lastRenderedPoints = [];
-  currentSelected.clear();
-  selectedCountSpan.textContent = "[0 selected]";
+// ----------------- Apply → mount widget -----------------
+btnApply.addEventListener("click", () => {
+  const x_feats = selectedFeaturesFromList(elListX);
+  const y_feats = selectedFeaturesFromList(elListY);
 
-  if (cols.length === 0) {
-    plotInfo.textContent = "No columns selected.";
+  if (x_feats.length === 0 || y_feats.length === 0) {
+    plotInfo.textContent = "Select at least one X feature and one Y feature.";
     return;
   }
+  plotInfo.textContent = "";
 
-  plotInfo.textContent = `Plotting ${cols.length} feature(s)`;
+  splomHost.innerHTML = "";
 
-  const size = 130; // subplot size
-  const padding = 20;
-  const n = cols.length;
-  const width = size * n + padding;
-  const height = size * n + padding;
-
-  const svg = d3
-    .select(splomDiv)
-    .append("svg")
-    .attr("width", width + 40)
-    .attr("height", height + 40)
-    .style("font-family", "sans-serif");
-
-  // compute scales for each column
-  const colScales = {};
-  cols.forEach((c) => {
-    const extent = d3.extent(rawData, (d) => d[c]);
-    // if flat, extend a bit
-    if (extent[0] === extent[1]) {
-      extent[0] = extent[0] - 1;
-      extent[1] = extent[1] + 1;
-    }
-    colScales[c] = d3
-      .scaleLinear()
-      .domain(extent)
-      .nice()
-      .range([padding, size - padding]);
+  model = new Model({
+    data: { data: raw },
+    col_attrs: x_feats, // X axis = columns
+    row_attrs: y_feats, // Y axis = rows
+    subplot_width: 180,
+    subplot_height: 160,
+    width: Math.min(window.innerWidth - 340, x_feats.length * 180 + 90),
+    height: Math.min(window.innerHeight - 40, y_feats.length * 160 + 90),
+    surrogate: true,
   });
 
-  // create group for plots
-  const g = svg.append("g").attr("transform", "translate(20,20)");
-
-  // add subplots
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n; j++) {
-      const xpos = j * size;
-      const ypos = i * size;
-      const cell = g
-        .append("g")
-        .attr("transform", `translate(${xpos}, ${ypos})`)
-        .attr("class", "cell");
-
-      const xcol = cols[j];
-      const ycol = cols[i];
-
-      // diagonal: show label and histogram
-      if (i === j) {
-        cell
-          .append("rect")
-          .attr("width", size)
-          .attr("height", size)
-          .attr("fill", "white");
-        cell
-          .append("text")
-          .attr("x", size / 2)
-          .attr("y", size / 2)
-          .attr("text-anchor", "middle")
-          .attr("dominant-baseline", "middle")
-          .text(xcol)
-          .style("font-size", "11px");
-        // simple histogram
-        const values = rawData.map((d) => d[xcol]);
-        const x = d3
-          .scaleLinear()
-          .domain(colScales[xcol].domain())
-          .range([padding, size - padding]);
-        const bins = d3.bin().domain(x.domain()).thresholds(16)(values);
-        const y = d3
-          .scaleLinear()
-          .domain([0, d3.max(bins, (b) => b.length)])
-          .range([size - padding, padding]);
-        const bar = cell.append("g").attr("transform", `translate(0,${0})`);
-        bar
-          .selectAll("rect")
-          .data(bins)
-          .join("rect")
-          .attr("x", (d) => x(d.x0))
-          .attr("y", (d) => y(d.length))
-          .attr("width", (d) => Math.max(1, x(d.x1) - x(d.x0) - 1))
-          .attr("height", (d) => size - padding - y(d.length))
-          .attr("fill", "#888")
-          .attr("opacity", 0.6);
-        continue;
-      }
-
-      // background
-      cell
-        .append("rect")
-        .attr("width", size)
-        .attr("height", size)
-        .attr("fill", "white");
-
-      const sx = colScales[xcol].range([padding, size - padding]);
-      const sy = colScales[ycol].range([size - padding, padding]);
-
-      // axes ticks on leftmost and bottommost
-      if (i === n - 1) {
-        const xAxis = d3.axisBottom(sx).ticks(3).tickSize(3);
-        cell
-          .append("g")
-          .attr("transform", `translate(0,${size - padding})`)
-          .call(xAxis)
-          .selectAll("text")
-          .style("font-size", "8px");
-      }
-      if (j === 0) {
-        const yAxis = d3.axisLeft(sy).ticks(3).tickSize(3);
-        cell
-          .append("g")
-          .attr("transform", `translate(${padding},0)`)
-          .call(yAxis)
-          .selectAll("text")
-          .style("font-size", "8px");
-      }
-
-      // points group
-      const pts = cell.append("g").attr("class", "points");
-
-      // render points; store index for linking selections
-      rawData.forEach((d, idx) => {
-        // small circles
-        pts
-          .append("circle")
-          .attr("cx", sx(d[xcol]))
-          .attr("cy", sy(d[ycol]))
-          .attr("r", 2.2)
-          .attr("fill", "#999")
-          .attr("opacity", 0.9)
-          .attr("data-idx", idx);
-        // push ref for global selection
-      });
-
-      // add brush
-      const brush = d3
-        .brush()
-        .extent([
-          [0, 0],
-          [size, size],
-        ])
-        .on("start brush end", ({ selection }) => {
-          if (!selection) {
-            // on clear - if end, clear currentSelected and recompute from other brushes
-            // compute across all cells
-            updateSelectionFromBrushes(svg);
-            return;
-          }
-          const [[x0, y0], [x1, y1]] = selection;
-          // select points in this cell
-          cell.selectAll("circle").classed("brushed", function () {
-            const cx = +d3.select(this).attr("cx");
-            const cy = +d3.select(this).attr("cy");
-            return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1;
-          });
-          updateSelectionFromBrushes(svg);
-        });
-
-      cell.append("g").attr("class", "brush").call(brush);
-    }
-  }
-
-  // after drawing, collect all points for easy access
-  lastRenderedPoints = Array.from(svg.selectAll("circle").nodes()).map((n) => ({
-    node: n,
-    idx: +n.getAttribute("data-idx"),
-  }));
-}
-
-function updateSelectionFromBrushes(svg) {
-  // gather all circles that have class 'brushed' across all cells
-  const brushedNodes = Array.from(svg.selectAll("circle.brushed").nodes());
-  // get unique data indices
-  const idxs = new Set(brushedNodes.map((n) => +n.getAttribute("data-idx")));
-  currentSelected = idxs;
-
-  // highlight globally: set all circles with these indices to highlighted color
-  lastRenderedPoints.forEach(({ node, idx }) => {
-    if (currentSelected.has(idx)) {
-      d3.select(node).attr("fill", "#e6550d").attr("r", 3.2).attr("opacity", 1);
-    } else {
-      d3.select(node).attr("fill", "#999").attr("r", 2.2).attr("opacity", 0.6);
-    }
+  model.on("change:selected", () => {
+    const sel = model.get("selected") || [];
+    const n = sel.reduce((acc, v) => acc + (v ? 1 : 0), 0);
+    spanCount.textContent = `[${n} selected]`;
   });
 
-  selectedCountSpan.textContent = `[${currentSelected.size} selected]`;
-}
+  AlloyLensWidget.render({ model, el: splomHost });
+});
 
-function exportSelectedCSV() {
-  if (!rawData) return;
-  if (currentSelected.size === 0) {
-    alert("No rows selected");
-    return;
-  }
-  const arr = Array.from(currentSelected).map((i) => rawData[i]);
-  const cols = Object.keys(rawData[0]);
-  const csv = [cols.join(",")]
-    .concat(
-      arr.map((r) => cols.map((c) => JSON.stringify(r[c] ?? "")).join(","))
-    )
-    .join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
+// ----------------- Export -----------------
+btnExport.addEventListener("click", () => {
+  if (!model) return;
+  const mask = model.get("selected") || [];
+  const hasAny = mask.some(Boolean);
+  const rows = hasAny ? raw.filter((_, i) => mask[i]) : raw;
+
+  const csv = d3.csvFormat(rows);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "selected_rows.csv";
-  document.body.appendChild(a);
+  a.download = hasAny ? "alloylens_selection.csv" : "alloylens_data.csv";
   a.click();
-  a.remove();
   URL.revokeObjectURL(url);
-}
-
-applyBtn.addEventListener("click", () => {
-  const cols = getSelectedCols();
-  // limit for performance
-  if (cols.length > 8) {
-    if (
-      !confirm("You selected more than 8 columns. That may be slow. Continue?")
-    )
-      return;
-  }
-  renderSplom(cols);
 });
-
-exportBtn.addEventListener("click", exportSelectedCSV);
-
-loadData();

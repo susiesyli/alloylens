@@ -1,9 +1,13 @@
 // partial copy of https://observablehq.com/@tiga1231/lib
-
-import * as d3 from "d3";
-import { default as crossfilter } from "https://cdn.skypack.dev/crossfilter2@1.5.4?min";
-import regl2 from "regl";
-
+import * as d3 from "https://esm.sh/d3@7.9.0";
+import regl2 from "https://esm.sh/regl@2.1.0?bundle";
+import crossfilter from "https://esm.sh/crossfilter2@1.5.4";
+// import * as d3 from "d3";
+// // import { default as crossfilter } from "https://cdn.skypack.dev/crossfilter2@1.5.4?min";
+// // import crossfilter from "https://esm.sh/crossfilter2@1.5.4";
+// import crossfilter from "crossfilter2";
+// import regl2 from "regl";
+// import regl from "regl";
 // ------------ Constants ---------------
 const pyplot_cycles = [
   "#1f77b4",
