@@ -7,6 +7,10 @@ import crossfilter from "https://esm.sh/crossfilter2@1.5.4";
 
 import { splom_gl2, C, cumulative_sum, clip, lines } from "./vis.js";
 
+/* surrogate  */
+let surrogateVisible = false;
+let surrogateCurves = null;
+
 /* ---------- small UI helpers ---------- */
 function style_control(sel, control_size) {
   sel
@@ -27,6 +31,40 @@ function scatterInColFrom(splom, j) {
     if (sp && sp.frame) return sp;
   }
   return null;
+}
+
+function drawSurrogateCurves(splom, row_attrs, col_attrs, curves, show) {
+  // remove any existing overlay curves
+  d3.selectAll(".surrogate-curve").remove();
+  if (!show || !curves) return;
+
+  for (let i = 0; i < row_attrs.length; i++) {
+    for (let j = 0; j < col_attrs.length; j++) {
+      const xcol = col_attrs[j];
+      const ycol = row_attrs[i];
+      const pts = curves?.[xcol]?.[ycol];
+      if (!pts) continue;
+
+      const sp = splom.subplots[i][j];
+      if (!sp || !sp.scales) continue;
+      const { sx, sy } = sp.scales;
+
+      const pathD = d3
+        .line()
+        .x((d) => sx(d[0]))
+        .y((d) => sy(d[1]))(pts);
+
+      sp.overlay
+        .append("path")
+        .attr("class", "surrogate-curve")
+        .attr("d", pathD)
+        .attr("fill", "none")
+        .attr("stroke", "orange")
+        .attr("stroke-width", 1.5)
+        .attr("opacity", 0.9)
+        .attr("pointer-events", "none");
+    }
+  }
 }
 
 /* ---------- main render entry ---------- */
@@ -101,6 +139,33 @@ function render({ model, el }) {
     show_tick_texts: false,
     show_axis_label: false,
   });
+
+  // --- surrogate curves (precomputed JSON) ---
+  let curvesLoaded = false;
+  let curves = null;
+  let curvesVisible = false;
+
+  const button = d3.select("#toggle-surrogate");
+  if (!button.empty()) {
+    // lazy-load once
+    button.on("click", async () => {
+      if (!curvesLoaded) {
+        curves = await d3.json("webapp/data/curves.json"); // path relative to index.html
+        curvesLoaded = true;
+      }
+      curvesVisible = !curvesVisible;
+      drawSurrogateCurves(splom, row_attrs, col_attrs, curves, curvesVisible);
+      button
+        .text(curvesVisible ? "Hide surrogate curves" : "Show surrogate curves")
+        .style("background", curvesVisible ? "#f08080" : "#ffcc80");
+    });
+  }
+
+  // function maybeRefreshSurrogate() {
+  //   if (curvesVisible && curves) {
+  //     drawSurrogateCurves(splom, row_attrs, col_attrs, curves, true);
+  //   }
+  // }
 
   // side sliders
   root_div
@@ -273,63 +338,6 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
     .attr("cy", y_offset)
     .call(style_control, control_size);
 
-  // function set_x_filter_bounds(j, lower, upper, sx, splom) {
-  //   d3.select(control_min.nodes()[j]).attr("cx", sx(lower));
-  //   d3.select(control_max.nodes()[j]).attr("cx", sx(upper));
-  //   d3.select(sliders_fg.nodes()[j])
-  //     .attr("x1", sx(lower))
-  //     .attr("x2", sx(upper));
-  //   d3.select(label_min.nodes()[j]).attr("x", sx(lower)).text(fmt(lower));
-  //   d3.select(label_max.nodes()[j]).attr("x", sx(upper)).text(fmt(upper));
-
-  //   // update SPLOM filters & highlight
-  //   // 1) apply filter
-  //   dim.filter([lower, upper]);
-
-  //   // 1a) recompute brushed mask explicitly
-  //   const filtered = splom.cross.allFiltered?.() ?? splom.cross.all();
-  //   const filteredSet = new Set(filtered);
-  //   splom.data.forEach((d) => {
-  //     d.brushed = filteredSet.has(d);
-  //   });
-
-  //   // 2) highlight + repaint
-  //   splom.highlight_brushed_2(
-  //     splom.data,
-  //     splom.subplots[0][0].scales.sc,
-  //     splom.cross,
-  //     splom.subplots,
-  //     splom.row_attrs,
-  //     splom.col_attrs
-  //   );
-  //   for (const row of splom.subplots) {
-  //     for (const sp of row) {
-  //       if (sp?.repaint) sp.repaint();
-  //       else if (sp?.draw) sp.draw();
-  //       else if (sp?.update) sp.update();
-  //     }
-  //   }
-  //   // const dim = splom.dimensions[splom.col_attrs[j]];
-  //   // dim.filter([lower, upper]);
-  //   // splom.highlight_brushed_2(
-  //   //   splom.data,
-  //   //   splom.subplots[0][0].scales.sc,
-  //   //   splom.cross,
-  //   //   splom.subplots,
-  //   //   splom.row_attrs,
-  //   //   splom.col_attrs
-  //   // );
-  //   // push selection to "model"
-  //   model.set(
-  //     "selected",
-  //     splom.data.map((d) => d.brushed)
-  //   );
-  //   model.set(
-  //     "dists",
-  //     splom.data.map((d) => d.dist)
-  //   );
-  //   model.save_changes();
-  // }
   // --- bottom (X) slider: update bounds + grey-out + repaint ---
   function set_x_filter_bounds(j, lower, upper, sx, splom) {
     // 0) safety guards
@@ -374,6 +382,7 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
         else if (sp.update) sp.update();
       }
     }
+    // maybeRefreshSurrogate();
 
     // 5) push selection to the widget model
     model.set(
@@ -641,6 +650,7 @@ function draw_side_sliders(svg, splom, model) {
         else if (sp.update) sp.update();
       }
     }
+    // maybeRefreshSurrogate();
 
     // 5) push selection to the widget model
     model.set(
