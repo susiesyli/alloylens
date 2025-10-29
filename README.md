@@ -40,5 +40,3 @@ app = al.AlloyLensApp(df, groups, x="elements", y="properties")
 app
 
 ```
-
-`pip install alloylens`
