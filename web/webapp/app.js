@@ -185,8 +185,13 @@ function attachListChangeListeners() {
   refreshAxisList("y");
 
   // ---- default feature selections ----
-  const defaultX = ["Al", "Si", "Cu", "Mg", "Mn", "Fe"]; // 6 elements
-  const defaultY = ["YS(MPa)", "hardness(Vickers)"]; // a couple of props
+  const defaultX = ["Si", "Cu", "Mg", "Mn", "Fe", "Ni", "Zn"]; // 7 elements
+  const defaultY = [
+    "YS(MPa)",
+    "hardness(Vickers)",
+    "Density(g/cm3)",
+    "Volume(m3/mol)",
+  ]; // 4 props
 
   setDefaultFeatures("x", defaultX);
   setDefaultFeatures("y", defaultY);
