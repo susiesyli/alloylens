@@ -31,7 +31,6 @@ const btnXAll = document.getElementById("x-select-all");
 const btnXClear = document.getElementById("x-clear");
 const btnYAll = document.getElementById("y-select-all");
 const btnYClear = document.getElementById("y-clear");
-const btnApply = document.getElementById("apply");
 const btnExport = document.getElementById("export");
 const spanCount = document.getElementById("selected-count");
 const plotInfo = document.getElementById("plot-info");
@@ -309,7 +308,7 @@ function applySelection() {
   AlloyLensWidget.render({ model, el: splomHost });
 }
 
-// small debounce so we don't rerender 10x while the user is clicking
+// small debounce
 let applyTimeout = null;
 function scheduleApply() {
   if (applyTimeout) clearTimeout(applyTimeout);
@@ -317,8 +316,6 @@ function scheduleApply() {
     applySelection();
   }, 150);
 }
-
-// btnApply.addEventListener("click", applySelection);
 
 // ----------------- Export -----------------
 btnExport.addEventListener("click", () => {
