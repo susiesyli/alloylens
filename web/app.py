@@ -128,8 +128,8 @@ def surrogate_curves(req: CurvesRequest):
     x_cols = req.x_cols if req.x_cols else X_COLS
     y_cols = req.y_cols if req.y_cols else Y_COLS
     # map names -> indices in training order
-    name_to_idx = {n:i for i, n in enumerate(X_COLS)}
-    x_idx = [name_to_idx[n] for n in x_cols]
+    # name_to_idx = {n:i for i, n in enumerate(X_COLS)}
+    # x_idx = [name_to_idx[n] for n in x_cols]
 
     # build X_local from selection
     if req.selected_indices:
@@ -145,7 +145,6 @@ def surrogate_curves(req: CurvesRequest):
 
     # subset columns to keep training order for forward()
     X_local_full = X_all[sel_idx, :]             # (M, D)
-    # We still pass full D to the network (model expects full input)
     curves = predict_local_curves(
         X_local=X_local_full,
         n_points=req.n_points,

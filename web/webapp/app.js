@@ -148,7 +148,17 @@ const GROUPS = {
   refreshAxisList("x");
   refreshAxisList("y");
 
-  plotInfo.textContent = "Pick groups and features, then click Apply.";
+  // ---- default feature selections ----
+  const defaultX = ["Al", "Si", "Cu", "Mg", "Mn", "Fe"]; // 6 elements
+  const defaultY = ["YS(MPa)", "hardness(Vickers)"]; // a couple of props
+
+  setDefaultFeatures("x", defaultX);
+  setDefaultFeatures("y", defaultY);
+
+  plotInfo.textContent = "Showing default SPLOM (6 elements × 2 properties).";
+
+  // Automatically draw initial SPLOM with these defaults
+  applySelection();
 })();
 
 // ----------------- UI builders -----------------
@@ -224,6 +234,13 @@ btnYClear.addEventListener("click", () => {
     .forEach((cb) => (cb.checked = false));
 });
 
+function setDefaultFeatures(axis, featureNames) {
+  const listEl = axis === "x" ? elListX : elListY;
+  listEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.checked = featureNames.includes(cb.value);
+  });
+}
+
 function selectedFeaturesFromList(listEl) {
   return Array.from(
     listEl.querySelectorAll('input[type="checkbox"]:checked')
@@ -231,7 +248,38 @@ function selectedFeaturesFromList(listEl) {
 }
 
 // ----------------- Apply → mount widget -----------------
-btnApply.addEventListener("click", () => {
+// btnApply.addEventListener("click", () => {
+//   const x_feats = selectedFeaturesFromList(elListX);
+//   const y_feats = selectedFeaturesFromList(elListY);
+
+//   if (x_feats.length === 0 || y_feats.length === 0) {
+//     plotInfo.textContent = "Select at least one X feature and one Y feature.";
+//     return;
+//   }
+//   plotInfo.textContent = "";
+
+//   splomHost.innerHTML = "";
+
+//   model = new Model({
+//     data: { data: raw },
+//     col_attrs: x_feats, // X axis = columns
+//     row_attrs: y_feats, // Y axis = rows
+//     subplot_width: 180,
+//     subplot_height: 160,
+//     width: Math.min(window.innerWidth - 340, x_feats.length * 180 + 90),
+//     height: Math.min(window.innerHeight - 40, y_feats.length * 160 + 90),
+//     surrogate: true,
+//   });
+
+//   model.on("change:selected", () => {
+//     const sel = model.get("selected") || [];
+//     const n = sel.reduce((acc, v) => acc + (v ? 1 : 0), 0);
+//     spanCount.textContent = `[${n} selected]`;
+//   });
+
+//   AlloyLensWidget.render({ model, el: splomHost });
+// });
+function applySelection() {
   const x_feats = selectedFeaturesFromList(elListX);
   const y_feats = selectedFeaturesFromList(elListY);
 
@@ -261,7 +309,9 @@ btnApply.addEventListener("click", () => {
   });
 
   AlloyLensWidget.render({ model, el: splomHost });
-});
+}
+
+btnApply.addEventListener("click", applySelection);
 
 // ----------------- Export -----------------
 btnExport.addEventListener("click", () => {
