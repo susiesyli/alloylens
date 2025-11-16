@@ -128,6 +128,20 @@ const GROUPS = {
   ],
 };
 
+function attachListChangeListeners() {
+  // event delegation: listen on the container, not each checkbox
+  elListX.addEventListener("change", (e) => {
+    if (e.target.matches('input[type="checkbox"]')) {
+      scheduleApply();
+    }
+  });
+  elListY.addEventListener("change", (e) => {
+    if (e.target.matches('input[type="checkbox"]')) {
+      scheduleApply();
+    }
+  });
+}
+
 // ----------------- init -----------------
 (async function init() {
   raw = await d3.csv("./webapp/data/sample.csv", d3.autoType);
@@ -139,6 +153,8 @@ const GROUPS = {
       numericCols.add(k);
     }
   }
+
+  attachListChangeListeners();
 
   // default groups
   checkGroups(groupXCheckboxes, ["elements"]); // X defaults
@@ -206,10 +222,19 @@ function refreshAxisList(axis) {
 
 // respond to group toggles
 groupXCheckboxes.forEach((cb) =>
-  cb.addEventListener("change", () => refreshAxisList("x"))
+  cb.addEventListener("change", () => {
+    refreshAxisList("x");
+    attachListChangeListeners();
+    scheduleApply();
+  })
 );
+
 groupYCheckboxes.forEach((cb) =>
-  cb.addEventListener("change", () => refreshAxisList("y"))
+  cb.addEventListener("change", () => {
+    refreshAxisList("y");
+    attachListChangeListeners();
+    scheduleApply();
+  })
 );
 
 // select/clear helpers
@@ -217,21 +242,25 @@ btnXAll.addEventListener("click", () => {
   elListX
     .querySelectorAll('input[type="checkbox"]')
     .forEach((cb) => (cb.checked = true));
+  scheduleApply();
 });
 btnXClear.addEventListener("click", () => {
   elListX
     .querySelectorAll('input[type="checkbox"]')
     .forEach((cb) => (cb.checked = false));
+  scheduleApply();
 });
 btnYAll.addEventListener("click", () => {
   elListY
     .querySelectorAll('input[type="checkbox"]')
     .forEach((cb) => (cb.checked = true));
+  scheduleApply();
 });
 btnYClear.addEventListener("click", () => {
   elListY
     .querySelectorAll('input[type="checkbox"]')
     .forEach((cb) => (cb.checked = false));
+  scheduleApply();
 });
 
 function setDefaultFeatures(axis, featureNames) {
@@ -248,37 +277,6 @@ function selectedFeaturesFromList(listEl) {
 }
 
 // ----------------- Apply → mount widget -----------------
-// btnApply.addEventListener("click", () => {
-//   const x_feats = selectedFeaturesFromList(elListX);
-//   const y_feats = selectedFeaturesFromList(elListY);
-
-//   if (x_feats.length === 0 || y_feats.length === 0) {
-//     plotInfo.textContent = "Select at least one X feature and one Y feature.";
-//     return;
-//   }
-//   plotInfo.textContent = "";
-
-//   splomHost.innerHTML = "";
-
-//   model = new Model({
-//     data: { data: raw },
-//     col_attrs: x_feats, // X axis = columns
-//     row_attrs: y_feats, // Y axis = rows
-//     subplot_width: 180,
-//     subplot_height: 160,
-//     width: Math.min(window.innerWidth - 340, x_feats.length * 180 + 90),
-//     height: Math.min(window.innerHeight - 40, y_feats.length * 160 + 90),
-//     surrogate: true,
-//   });
-
-//   model.on("change:selected", () => {
-//     const sel = model.get("selected") || [];
-//     const n = sel.reduce((acc, v) => acc + (v ? 1 : 0), 0);
-//     spanCount.textContent = `[${n} selected]`;
-//   });
-
-//   AlloyLensWidget.render({ model, el: splomHost });
-// });
 function applySelection() {
   const x_feats = selectedFeaturesFromList(elListX);
   const y_feats = selectedFeaturesFromList(elListY);
@@ -309,6 +307,15 @@ function applySelection() {
   });
 
   AlloyLensWidget.render({ model, el: splomHost });
+}
+
+// small debounce so we don't rerender 10x while the user is clicking
+let applyTimeout = null;
+function scheduleApply() {
+  if (applyTimeout) clearTimeout(applyTimeout);
+  applyTimeout = setTimeout(() => {
+    applySelection();
+  }, 150);
 }
 
 btnApply.addEventListener("click", applySelection);
