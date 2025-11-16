@@ -35,6 +35,26 @@ const btnExport = document.getElementById("export");
 const spanCount = document.getElementById("selected-count");
 const plotInfo = document.getElementById("plot-info");
 const splomHost = document.getElementById("splom");
+const knnDeltaInput = document.getElementById("knn-delta");
+const knnDeltaValue = document.getElementById("knn-delta-value");
+let knnDelta = knnDeltaInput ? parseFloat(knnDeltaInput.value) || 0.02 : 0.02;
+
+if (knnDeltaValue) {
+  knnDeltaValue.textContent = knnDelta.toFixed(2);
+}
+
+if (knnDeltaInput) {
+  knnDeltaInput.addEventListener("input", (e) => {
+    knnDelta = parseFloat(e.target.value);
+    knnDeltaValue.textContent = knnDelta.toFixed(2);
+
+    // if a SPLOM is already rendered, notify the widget model
+    if (model) {
+      model.set("knn_delta", knnDelta);
+      model.save_changes();
+    }
+  });
+}
 
 // group toggles
 const groupXCheckboxes = Array.from(document.querySelectorAll(".group-x"));
@@ -123,7 +143,9 @@ const GROUPS = {
     "Therm. diffusivity(m2/s)",
     "Therm.resistivity(mK/W)",
     "Linear thermal expansion (1/K)(20.0-300.0°C)",
+    // "Linear thermal expansion (1/K)",
     "Technical thermal expansion (1/K)(20.0-300.0°C)",
+    // "Technical thermal expansion (1/K)",
   ],
 };
 
@@ -145,14 +167,13 @@ function attachListChangeListeners() {
 (async function init() {
   raw = await d3.csv("./webapp/data/sample.csv", d3.autoType);
 
-  // which columns are numeric?
+  // numeric columns
   const first = raw[0] ?? {};
   for (const k of Object.keys(first)) {
     if (typeof first[k] === "number" && Number.isFinite(first[k])) {
       numericCols.add(k);
     }
   }
-
   attachListChangeListeners();
 
   // default groups
@@ -297,6 +318,7 @@ function applySelection() {
     width: Math.min(window.innerWidth - 340, x_feats.length * 180 + 90),
     height: Math.min(window.innerHeight - 40, y_feats.length * 160 + 90),
     surrogate: true,
+    knn_delta: knnDelta,
   });
 
   model.on("change:selected", () => {

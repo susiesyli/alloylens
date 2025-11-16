@@ -762,14 +762,11 @@ export function splom_gl2(
     subplot_padding_right = 0,
     subplot_padding_top = 0,
     subplot_padding_bottom = 20,
-    //alternatively
-    // wspace = 1, //The amount of width reserved for space between subplots. Similar to pyplot
-    // hspace = 0.1,
 
     //x and y axes
     scales = { sc: (d) => C[0] }, // todo: flexible for individual subplots
     is_square_scale = false,
-    is_log_scale = false,
+    // is_log_scale = false,
     xticks = 5,
     yticks = 5,
     show_tick_texts = true,
@@ -944,11 +941,7 @@ export function splom_gl2(
             brush = d3
               .brushX()
               .extent(extent)
-              .on("start", () => {
-                // if (brush_listeners["start"]) {
-                //   brush_listeners["start"](res.brushed_data);
-                // }
-              })
+              .on("start", () => {})
               .on("brush", ({ selection }) => {
                 let { sx, sy } = kde_plot.scales;
                 //get brushed region
@@ -1114,11 +1107,9 @@ export function splom_gl2(
           overlay_container.node().appendChild(overlay_ij.node());
 
           // scatterplot brush
-          // Brushes on scatterplot, scatterplot brushes
           if (brush) {
             function brush_record_format(row_attr, col_attr) {
-              //names stored in a set for keeping track
-              //of current active brushes on scatterplots
+              //names stored in a set for keeping track of current active brushes on scatterplots
               return `${col_attr}-vs-${row_attr}`;
             }
             // [[x0, y0], [x1, y1]]
@@ -1139,7 +1130,6 @@ export function splom_gl2(
               .extent(extent)
               .on("start", ({ selection, sourceEvent }) => {
                 if (!sourceEvent) return;
-                // if (!d3.event.sourceEvent) return;
                 if (brush_listeners["start"]) {
                   brush_listeners["start"](return_node.brushed_data);
                 }
@@ -1147,10 +1137,10 @@ export function splom_gl2(
               .on("brush", ({ selection, sourceEvent }) => {
                 if (!sourceEvent) return;
 
-                // //get brushed region
+                //get brushed region
                 let [bx0, bx1] = [selection[0][0], selection[1][0]];
                 let [by0, by1] = [selection[0][1], selection[1][1]];
-                // //invert brush to data domain
+                //invert brush to data domain
                 let [x0, x1] = [sx.invert(bx0), sx.invert(bx1)];
                 let [y0, y1] = [sy.invert(by0), sy.invert(by1)];
                 [y0, y1] = [Math.min(y0, y1), Math.max(y0, y1)];
@@ -1197,11 +1187,8 @@ export function splom_gl2(
                     ]);
                   }
                 }
-                // //save brushed_data to returned object (return_node)
+                // save brushed_data to returned object (return_node)
                 return_node.brushed_data = brushed_data;
-                // set_value(return_node, {
-                //     brush: {selected: return_node.brushed_data},
-                // });
 
                 if (brush_listeners["end"]) {
                   brush_listeners["end"]([]);
@@ -1209,7 +1196,6 @@ export function splom_gl2(
               })
               .on("end", ({ selection, sourceEvent }) => {
                 if (!sourceEvent) return;
-                // if (!d3.event.sourceEvent) return;
                 //brush cleared
                 if (selection === null) {
                   //update selection
@@ -1448,16 +1434,21 @@ function distance_to_cuboid(d, attrs, dimensions, attr_extents) {
   return dist;
 }
 
-function highlight_brushed_2(data, sc, cross, subplots, row_attrs, col_attrs) {
-  // A sub-routine for splom_gl2() to record the brushed to data (via crossfilter)
-  // and update the color in all sub-scatterplots
-  //
+function highlight_brushed_2(
+  data,
+  sc,
+  cross,
+  subplots,
+  row_attrs,
+  col_attrs,
+  color_reach = 0.02
+) {
+  // record the brushed to data (via crossfilter) and update the color in all sub-scatterplots
   let filter_nonempty = cross.allFiltered().length > 0;
   if (filter_nonempty) {
     highlight_brushed(data, sc, cross, subplots, row_attrs, col_attrs);
   } else {
-    // filter returns no data points
-    // color points by distance to the filter box
+    // filter returns no data points, color points by distance to the filter box
     let all_attrs = row_attrs.concat(col_attrs);
     let attr_extents = Object.fromEntries(
       zip(
@@ -1472,9 +1463,10 @@ function highlight_brushed_2(data, sc, cross, subplots, row_attrs, col_attrs) {
 
     //recolor data points
     let [vmin, vmax] = d3.extent(data, (d) => d.dist);
-    let color_reach = 0.02; // 0-1 color reachability
+    // ---- use user-specified fraction of range ----
+    const reach = color_reach; // fraction in [0,1]
     //domain for color scale
-    let [cmin, cmax] = [vmin, vmin + color_reach * (vmax - vmin)];
+    let [cmin, cmax] = [vmin, vmin + reach * (vmax - vmin)];
     data.forEach((d, i) => {
       d.brushed = d.dist < cmax;
     });
@@ -1515,7 +1507,6 @@ function highlight_brushed(
 ) {
   // A sub-routine for splom_gl2() to record the brushed to data (via crossfilter)
   // and update the color in all sub-scatterplots
-
   data.forEach((d, i) => {
     d.brushed = cross.isElementFiltered(i);
   });

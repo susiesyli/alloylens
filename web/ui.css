@@ -183,3 +183,8 @@ button {
   margin-bottom: 8px;
   font-size: 13px;
 }
+
+#knn-delta {
+  width: 100px;
+  align-self: flex-end;
+}

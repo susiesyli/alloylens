@@ -1,8 +1,8 @@
 // mywidget.js  — webapp build
 
 import * as d3 from "https://esm.sh/d3@7.9.0";
-import regl2 from "https://esm.sh/regl@2.1.0?bundle";
-import crossfilter from "https://esm.sh/crossfilter2@1.5.4";
+// import regl2 from "https://esm.sh/regl@2.1.0?bundle";
+// import crossfilter from "https://esm.sh/crossfilter2@1.5.4";
 
 import { splom_gl2, C, cumulative_sum, clip, lines } from "./vis.js";
 
@@ -201,20 +201,46 @@ function render({ model, el }) {
     }
   });
 
-  // toggle surrogate lines with "s"
-  d3.select("body").on("keydown", function (event) {
-    if (event.key === "s") {
-      const show = !model.get("surrogate");
-      model.set("surrogate", show);
-      for (let i = 0; i < row_attrs.length; i++) {
-        for (let j = 0; j < col_attrs.length; j++) {
-          splom.subplots[i][j].overlay
-            .selectAll(".line")
-            .attr("display", show ? "" : "none");
-        }
-      }
-    }
+  // Re-run KNN coloring if user changes knn_delta
+  model.on("change:knn_delta", () => {
+    const colorReach = model.get("knn_delta") ?? 0.02;
+
+    splom.highlight_brushed_2(
+      splom.data,
+      splom.subplots[0][0].scales.sc,
+      splom.cross,
+      splom.subplots,
+      splom.row_attrs,
+      splom.col_attrs,
+      colorReach
+    );
+
+    // update selection + distances on the model
+    model.set(
+      "selected",
+      splom.data.map((d) => d.brushed)
+    );
+    model.set(
+      "dists",
+      splom.data.map((d) => d.dist)
+    );
+    model.save_changes();
   });
+
+  // toggle surrogate lines with "s"
+  // d3.select("body").on("keydown", function (event) {
+  //   if (event.key === "s") {
+  //     const show = !model.get("surrogate");
+  //     model.set("surrogate", show);
+  //     for (let i = 0; i < row_attrs.length; i++) {
+  //       for (let j = 0; j < col_attrs.length; j++) {
+  //         splom.subplots[i][j].overlay
+  //           .selectAll(".line")
+  //           .attr("display", show ? "" : "none");
+  //       }
+  //     }
+  //   }
+  // });
 
   el.appendChild(root_div.node());
 }
@@ -351,13 +377,15 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
     });
 
     // 4) recolor/highlight + repaint
+    const colorReach = model.get("knn_delta") ?? 0.02;
     splom.highlight_brushed_2(
       splom.data,
       splom.subplots[0][0].scales.sc,
       splom.cross,
       splom.subplots,
       splom.row_attrs,
-      splom.col_attrs
+      splom.col_attrs,
+      colorReach
     );
     for (const row of splom.subplots) {
       for (const sp of row) {
@@ -618,13 +646,16 @@ function draw_side_sliders(svg, splom, model) {
     });
 
     // 4) recolor/highlight + repaint
+    const colorReach = model.get("knn_delta") ?? 0.02;
+
     splom.highlight_brushed_2(
       splom.data,
       splom.subplots[0][0].scales.sc,
       splom.cross,
       splom.subplots,
       splom.row_attrs,
-      splom.col_attrs
+      splom.col_attrs,
+      colorReach
     );
     for (const row of splom.subplots) {
       for (const sp of row) {
