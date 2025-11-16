@@ -318,7 +318,7 @@ function scheduleApply() {
   }, 150);
 }
 
-btnApply.addEventListener("click", applySelection);
+// btnApply.addEventListener("click", applySelection);
 
 // ----------------- Export -----------------
 btnExport.addEventListener("click", () => {
