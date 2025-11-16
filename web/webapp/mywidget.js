@@ -1,15 +1,10 @@
 // mywidget.js  — webapp build
 
-// Clean ESM URLs (avoid import-map/shim headaches)
 import * as d3 from "https://esm.sh/d3@7.9.0";
 import regl2 from "https://esm.sh/regl@2.1.0?bundle";
 import crossfilter from "https://esm.sh/crossfilter2@1.5.4";
 
 import { splom_gl2, C, cumulative_sum, clip, lines } from "./vis.js";
-
-/* surrogate  */
-let surrogateVisible = false;
-let surrogateCurves = null;
 
 /* ---------- small UI helpers ---------- */
 function style_control(sel, control_size) {
@@ -23,7 +18,7 @@ function style_control(sel, control_size) {
 /* ---------- robust SPLOM helpers (skip diagonal KDEs) ---------- */
 function scatterInRowFrom(splom, i) {
   const row = splom.subplots[i] || [];
-  return row.find((sp) => sp && sp.frame) || null; // SCATTER cell has .frame/.scales
+  return row.find((sp) => sp && sp.frame) || null;
 }
 function scatterInColFrom(splom, j) {
   for (let i = 0; i < splom.subplots.length; i++) {
@@ -161,12 +156,6 @@ function render({ model, el }) {
     });
   }
 
-  // function maybeRefreshSurrogate() {
-  //   if (curvesVisible && curves) {
-  //     drawSurrogateCurves(splom, row_attrs, col_attrs, curves, true);
-  //   }
-  // }
-
   // side sliders
   root_div
     .append("svg")
@@ -238,7 +227,6 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
   const control_size = 12;
   const y_offset = 30;
 
-  // scales per column (use a SCATTER in that column)
   const x_offsets = cumulative_sum([
     0,
     ...d3
@@ -252,9 +240,6 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
         scatterInColFrom(splom, j)?.scales.sx ??
         d3.scaleLinear().domain([0, 1]).range([0, subplot_width])
     );
-  // const sxs = d3
-  //   .range(n_cols)
-  //   .map((j) => scatterInColFrom(splom, j)?.scales.sx);
 
   const g_sliders = svg
     .selectAll("g.bottom-slider")
@@ -382,7 +367,6 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
         else if (sp.update) sp.update();
       }
     }
-    // maybeRefreshSurrogate();
 
     // 5) push selection to the widget model
     model.set(
@@ -650,7 +634,6 @@ function draw_side_sliders(svg, splom, model) {
         else if (sp.update) sp.update();
       }
     }
-    // maybeRefreshSurrogate();
 
     // 5) push selection to the widget model
     model.set(

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AlloyLens — UI port</title>
+    <title>AlloyLens Web</title>
     <link rel="stylesheet" href="webapp/css/mywidget.css" />
 
     <style>
@@ -42,6 +42,7 @@
     </style>
   </head>
   <body>
+    <h1 style="text-align: center; margin: 12px 0 0 0">AlloyLens</h1>
     <div id="app">
       <aside id="controls">
         <h2>Select features to plot</h2>
@@ -68,9 +69,9 @@
                 Properties</label
               >
             </div>
-            <div id="list-x" class="overflow" style="height: 160px"></div>
+            <div id="list-x" class="overflow" style="height: 70px"></div>
             <div class="row small">
-              <button id="x-select-all" type="button">Select shown</button>
+              <button id="x-select-all" type="button">Select all</button>
               <button id="x-clear" type="button">Clear</button>
             </div>
           </section>
@@ -96,19 +97,31 @@
                 Properties</label
               >
             </div>
-            <div id="list-y" class="overflow" style="height: 160px"></div>
+            <div id="list-y" class="overflow" style="height: 120px"></div>
             <div class="row small">
-              <button id="y-select-all" type="button">Select shown</button>
+              <button id="y-select-all" type="button">Select all</button>
               <button id="y-clear" type="button">Clear</button>
             </div>
           </section>
         </div>
 
         <div class="row" style="margin-top: 8px">
-          <button id="apply">Apply</button>
+          <button
+            id="apply"
+            style="
+              background: #ffcc80;
+              border: none;
+              padding: 6px 12px;
+              border-radius: 6px;
+              font-weight: 600;
+              cursor: pointer;
+            "
+          >
+            Apply
+          </button>
         </div>
         <div class="row" style="margin-top: 8px">
-          <button id="export">Export selected rows</button>
+          <button id="export">Export selected</button>
           <span id="selected-count">[0 selected]</span>
         </div>
         <div
@@ -134,6 +147,21 @@
             Show surrogate curves
           </button>
         </div>
+
+        <!-- <h2>KNN Parameters</h2> -->
+        <!-- slider for delta value -->
+        <!-- <div class="row" style="align-items: center; gap: 8px">
+          <label for="knn-delta">Delta:</label>
+          <input
+            type="range"
+            id="knn-delta"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.1"
+          />
+          <span id="knn-delta-value">0.10</span>
+       -->
       </aside>
 
       <main id="main">

@@ -171,7 +171,6 @@ function gatherGroupCols(axis) {
       if (numericCols.has(col)) cols.push(col);
     }
   }
-  // dedupe while preserving order
   return Array.from(new Set(cols));
 }
 

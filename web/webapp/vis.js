@@ -1001,14 +1001,8 @@ export function splom_gl2(
                     col_attrs
                   );
 
-                  // //save brushed_data to returned object (return_node)
+                  //save brushed_data to returned object (return_node)
                   return_node.brushed_data = brushed_data;
-                  // set_value(return_node, {
-                  //     brush: {
-                  //         selected: return_node.brushed_data,
-                  //     },
-                  // });
-
                   if (brush_listeners["end"]) {
                     brush_listeners["end"]([]);
                   }
@@ -1068,12 +1062,9 @@ export function splom_gl2(
 
           //hide scatterplot x-axes tick text that are not on the bottom
           if (!show_tick_texts) {
-            // if (i !== 0) {
             d3.select(frame)
               .selectAll(".x-axis .tick text")
               .style("display", "none");
-            // }
-            // if (j !== 0) {
             d3.select(frame)
               .selectAll(".y-axis .tick text")
               .style("display", "none");
@@ -1168,25 +1159,9 @@ export function splom_gl2(
                 dim_y.filter([y0, y1]);
                 // update selection
                 let brushed_data = dim_x.bottom(Infinity);
-                // console.log(`brushed ${col_attrs[j]}`, [
-                //     x0,
-                //     x1,
-                // ]);
-                // console.log(`brushed ${row_attrs[i]}`, [
-                //     y0,
-                //     y1,
-                // ]);
-                // console.log(`brushed ${brushed_data.length} points`);
                 active_brushes.add(
                   brush_record_format(row_attrs[i], col_attrs[j])
                 );
-                // MARK BRUSH
-                // console.log("active_brushes", active_brushes);
-                // console.log("active_dimensions:");
-                // for (let k of Object.keys(dimensions)) {
-                //   console.log("\t", k, dimensions[k].currentFilter());
-                // }
-
                 highlight_brushed(
                   data,
                   scales.sc,
@@ -1258,13 +1233,7 @@ export function splom_gl2(
                     row_attrs,
                     col_attrs
                   );
-                  // save brushed_data to returned object (return_node)
                   return_node.brushed_data = brushed_data;
-                  // set_value(return_node, {
-                  //     brush: {
-                  //         selected: return_node.brushed_data,
-                  //     },
-                  // });
 
                   if (brush_listeners["end"]) {
                     brush_listeners["end"]([]);
@@ -1283,7 +1252,6 @@ export function splom_gl2(
             //record this brush and its g
             plot.brush = brush;
             plot.g_brush = g_brush;
-            // console.log(i, j, subplot_brushes[i][j]);
           }
 
           plot.data = data;
@@ -1377,13 +1345,6 @@ export function splom_gl2(
   // the entire splom recolor
   return_node.recolor = (colors, { depths } = {}) => {
     return_node.clear();
-    // return_node.subplots.forEach((row, i) => {
-    //     row.forEach((subplot, j) => {
-    //         if (subplot !== undefined && i != j) {
-    //             subplot.recolor(colors, {depths});
-    //         }
-    //     });
-    // });
     if (return_node.combined_data === undefined) {
       return_node.combined_data = {
         positions: [],
@@ -1447,10 +1408,6 @@ export function splom_gl2(
       });
       kde_plot.style("overflow", "visible");
       kde_plot.select(".y-axis").selectAll("text").remove();
-      // if (j !== 0) {
-      //   kde_plot.select(".x-axis").selectAll("text").remove();
-      // }
-      // subplots[i][j] = kde_plot;
       let left = padding_left + j * plot_width;
       let top = padding_top + (n_row_attrs - 1 - i) * plot_height;
       kde_plot
@@ -1643,8 +1600,6 @@ export function scatter(
     padding_right = 0,
     padding_top = 0,
     pad = 0.1,
-    // crossfilter = undefined,
-    // plots = [],
     s = (d, i) => 10, //marker size
     return_obj = "g",
     title = undefined,
@@ -1681,7 +1636,6 @@ export function scatter(
   let main = sel.append("g").attr("class", "scatter");
   let bg = main.append("g").attr("class", "bg"); // g that draws frame (axes and ticks)
   let fg = main.append("g").attr("class", "fg"); // g that draws marks
-  // let inter = main.append("g").attr("class", "interaction");
 
   //draw a frame
   bg.call(frame, data, {
