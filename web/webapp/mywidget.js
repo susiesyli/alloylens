@@ -15,7 +15,7 @@ function style_control(sel, control_size) {
     .attr("r", control_size / 2);
 }
 
-/* ---------- robust SPLOM helpers (skip diagonal KDEs) ---------- */
+/* ---------- SPLOM helpers ---------- */
 function scatterInRowFrom(splom, i) {
   const row = splom.subplots[i] || [];
   return row.find((sp) => sp && sp.frame) || null;
@@ -79,13 +79,13 @@ function render({ model, el }) {
     model.get("width") ||
     Math.min(
       subplot_width * col_attrs.length + side_bar_width,
-      el.getBoundingClientRect().width
+      el.getBoundingClientRect().width,
     );
   const ui_height =
     model.get("height") ||
     Math.min(
       subplot_height * row_attrs.length + bottom_bar_height,
-      ui_width * 0.618
+      ui_width * 0.618,
     );
 
   const splom_width = col_attrs.length * subplot_width;
@@ -212,17 +212,17 @@ function render({ model, el }) {
       splom.subplots,
       splom.row_attrs,
       splom.col_attrs,
-      colorReach
+      colorReach,
     );
 
     // update selection + distances on the model
     model.set(
       "selected",
-      splom.data.map((d) => d.brushed)
+      splom.data.map((d) => d.brushed),
     );
     model.set(
       "dists",
-      splom.data.map((d) => d.dist)
+      splom.data.map((d) => d.dist),
     );
     model.save_changes();
   });
@@ -264,7 +264,7 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
     .map(
       (j) =>
         scatterInColFrom(splom, j)?.scales.sx ??
-        d3.scaleLinear().domain([0, 1]).range([0, subplot_width])
+        d3.scaleLinear().domain([0, 1]).range([0, subplot_width]),
     );
 
   const g_sliders = svg
@@ -385,7 +385,7 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
       splom.subplots,
       splom.row_attrs,
       splom.col_attrs,
-      colorReach
+      colorReach,
     );
     for (const row of splom.subplots) {
       for (const sp of row) {
@@ -399,11 +399,11 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
     // 5) push selection to the widget model
     model.set(
       "selected",
-      splom.data.map((d) => d.brushed)
+      splom.data.map((d) => d.brushed),
     );
     model.set(
       "dists",
-      splom.data.map((d) => d.dist)
+      splom.data.map((d) => d.dist),
     );
     model.save_changes();
   }
@@ -418,10 +418,10 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
       const x_lower = clip(
         x,
         domain[0],
-        x_upper - (domain[1] - domain[0]) * 0.05
+        x_upper - (domain[1] - domain[0]) * 0.05,
       );
       set_x_filter_bounds(j, x_lower, x_upper, sx, splom);
-    })
+    }),
   );
 
   control_max.call(
@@ -434,10 +434,10 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
       const x_upper = clip(
         x,
         x_lower + (domain[1] - domain[0]) * 0.05,
-        domain[1]
+        domain[1],
       );
       set_x_filter_bounds(j, x_lower, x_upper, sx, splom);
-    })
+    }),
   );
 
   // click/dblclick to snap/reset
@@ -498,7 +498,7 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
       const domain = sx.domain();
       dx = clip(dx, domain[0] - x1, domain[1] - x2);
       set_x_filter_bounds(j, x1 + dx, x2 + dx, sx, splom);
-    })
+    }),
   );
 }
 
@@ -515,11 +515,11 @@ function draw_side_sliders(svg, splom, model) {
   //   return scatterInRowFrom(splom, i)?.scales.sy || row[0].scales.sy;
   // });
   const sys = splom.subplots.map(
-    (row, i) => scatterInRowFrom(splom, i)?.scales.sy ?? row[0].scales.sy
+    (row, i) => scatterInRowFrom(splom, i)?.scales.sy ?? row[0].scales.sy,
   );
 
   const y_offsets = cumulative_sum(
-    splom_subplots.map((row) => row[0].plot_height)
+    splom_subplots.map((row) => row[0].plot_height),
   );
   const total_height = y_offsets[y_offsets.length - 1];
 
@@ -609,7 +609,7 @@ function draw_side_sliders(svg, splom, model) {
     .attr("x", x_offset + 20)
     .attr(
       "transform",
-      (i) => `rotate(-90 ${x_offset + 20} ${d3.mean(sys[i].range())})`
+      (i) => `rotate(-90 ${x_offset + 20} ${d3.mean(sys[i].range())})`,
     )
     .style("text-anchor", "middle")
     .text((i) => splom.row_attrs[i]);
@@ -655,7 +655,7 @@ function draw_side_sliders(svg, splom, model) {
       splom.subplots,
       splom.row_attrs,
       splom.col_attrs,
-      colorReach
+      colorReach,
     );
     for (const row of splom.subplots) {
       for (const sp of row) {
@@ -669,11 +669,11 @@ function draw_side_sliders(svg, splom, model) {
     // 5) push selection to the widget model
     model.set(
       "selected",
-      splom.data.map((d) => d.brushed)
+      splom.data.map((d) => d.brushed),
     );
     model.set(
       "dists",
-      splom.data.map((d) => d.dist)
+      splom.data.map((d) => d.dist),
     );
     model.save_changes();
   }
@@ -688,10 +688,10 @@ function draw_side_sliders(svg, splom, model) {
       const y_lower = clip(
         y,
         domain[0],
-        y_upper - (domain[1] - domain[0]) * 0.05
+        y_upper - (domain[1] - domain[0]) * 0.05,
       );
       set_y_filter_bounds(i, y_lower, y_upper, sy, splom);
-    })
+    }),
   );
 
   control_max.call(
@@ -704,10 +704,10 @@ function draw_side_sliders(svg, splom, model) {
       const y_upper = clip(
         y,
         y_lower + (domain[1] - domain[0]) * 0.05,
-        domain[1]
+        domain[1],
       );
       set_y_filter_bounds(i, y_lower, y_upper, sy, splom);
-    })
+    }),
   );
 
   // click/dblclick to snap/reset
@@ -768,7 +768,7 @@ function draw_side_sliders(svg, splom, model) {
       const domain = sy.domain();
       dy = clip(dy, domain[0] - y1, domain[1] - y2);
       set_y_filter_bounds(i, y1 + dy, y2 + dy, sy, splom);
-    })
+    }),
   );
 }
 

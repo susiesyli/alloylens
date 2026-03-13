@@ -10,17 +10,61 @@
       rel="stylesheet"
       href="https://unpkg.com/intro.js/minified/introjs.min.css"
     />
+    <style>
+      /* Target only the Intro.js Skip button to match site typography */
+      .introjs-skipbutton {
+        font-family: inherit !important;
+        font-size: 16px !important;
+        padding: 6px 6px !important;
+        border-radius: 8px !important;
+        color: var(--text) !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+    </style>
   </head>
   <body>
-    <nav id="top-nav" style="margin: 12px 0">
-      <a href="tutorial.html" class="btn btn-ghost" id="tutorial-link"
-        >Walkthrough Tutorial</a
+    <header class="page-header">
+      <h1>
+        AlloyLens: A Visual Analytics Tool for High-throughput Alloy Screening
+        and Inverse Design
+      </h1>
+      <a
+        href="tutorial.html"
+        class="btn btn-ghost icon-btn"
+        id="tutorial-link"
+        title="Walkthrough Tutorial"
       >
-    </nav>
-    <h1>
-      AlloyLens: A Visual Analytics Tool for High-throughput Alloy Screening and
-      Inverse Design
-    </h1>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            d="M12 2a10 10 0 100 20 10 10 0 000-20z"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M12 8v1"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M11.8 12.5c.2-.9 1-1.5 1.9-1.5.8 0 1.6.4 1.6 1.2 0 1.6-2.5 1.9-2.5 3.3"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </a>
+    </header>
     <div id="app">
       <aside id="controls">
         <h2>Select features</h2>
@@ -123,16 +167,18 @@
         </div>
 
         <div id="toolbar">
-          <span>Surrogate model</span>
+          <!-- <span>Surrogate model</span> -->
           <button id="toggle-surrogate" class="btn btn-primary">
-            Show surrogate curves
+            Show surrogate model curves
           </button>
         </div>
 
         <h2>Recommendation Range</h2>
         <section class="axis-panel">
           <div class="row" style="align-items: center; gap: 8px">
-            <label for="knn-delta">Distance threshold:</label>
+            <label for="knn-delta" style="font-size: small"
+              >Distance threshold:</label
+            >
             <input
               type="range"
               id="knn-delta"
@@ -140,6 +186,7 @@
               max="0.20"
               step="0.01"
               value="0.02"
+              style="width: 30%"
             />
             <span id="knn-delta-value">0.02</span>
           </div>
@@ -155,5 +202,11 @@
     <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
     <script src="webapp/tutorial.js"></script>
     <script type="module" src="webapp/app.js"></script>
+    <footer class="site-footer">
+      <div>
+        Developed by team: Suyang (Susie) Li, Fernando Fajardo-Rojas, Diego
+        Gomez-Gualdron, Remco Chang, Mingwei Li
+      </div>
+    </footer>
   </body>
 </html>

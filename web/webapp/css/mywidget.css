@@ -6,9 +6,9 @@ svg text {
   -ms-user-select: none;
   -o-user-select: none;
   user-select: none;
-  font-family: sans-serif;
-  font-size: 10pt;
-  fill: #667;
+  font-family: inherit;
+  font-size: 12px;
+  fill: var(--muted, #667);
 }
 
 .slider-bg,

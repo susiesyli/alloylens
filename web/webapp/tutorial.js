@@ -10,10 +10,10 @@
 
   function buildSteps() {
     const steps = [];
-    if (elementExists("#top-nav")) {
+    if (elementExists("#tutorial-link")) {
       steps.push({
-        element: "#top-nav",
-        intro: "Top navigation — access the walkthrough anytime here.",
+        element: "#tutorial-link",
+        intro: "Open the guided walkthrough from this icon.",
         position: "bottom",
       });
     }
