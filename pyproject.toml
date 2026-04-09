@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alloylens"
-version = "0.0.1"
+version = "0.0.2"
 description = "Interactive SPLOM widget for high-throughput alloy inverse design"
 readme = "README.md"
 requires-python = ">=3.9"

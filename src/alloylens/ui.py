@@ -138,7 +138,7 @@ class AlloyLensApp(W.VBox):
         return [
             W.Checkbox(
                 # value=(c in cols),
-                value=True,
+                value=False,
                 description=c,
                 indent=False,
                 layout=W.Layout(width=f"{checkbox_width}px"),

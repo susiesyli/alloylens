@@ -33,3 +33,7 @@ app = al.AlloyLensApp(df, groups, x="elements", y="properties")
 app
 
 ```
+
+
+### Web demo:
+[susiesyli.com/alloylens-web/](susiesyli.com/alloylens-web/)
