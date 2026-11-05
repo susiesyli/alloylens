@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AlloyLens</title>
+    <link rel="stylesheet" href="webapp/css/mywidget.css" />
+    <link rel="stylesheet" href="ui.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/intro.js/minified/introjs.min.css"
+    />
+    <style>
+      /* Target only the Intro.js Skip button to match site typography */
+      .introjs-skipbutton {
+        font-family: inherit !important;
+        font-size: 16px !important;
+        padding: 6px 6px !important;
+        border-radius: 8px !important;
+        color: var(--text) !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>
+        AlloyLens: A Visual Analytics Tool for High-throughput Alloy Screening
+        and Inverse Design
+      </h1>
+      <a
+        href="tutorial.html"
+        class="btn btn-ghost icon-btn"
+        id="tutorial-link"
+        title="Walkthrough Tutorial"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            d="M12 2a10 10 0 100 20 10 10 0 000-20z"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M12 8v1"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M11.8 12.5c.2-.9 1-1.5 1.9-1.5.8 0 1.6.4 1.6 1.2 0 1.6-2.5 1.9-2.5 3.3"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </a>
+    </header>
+    <div id="app">
+      <aside id="controls">
+        <h2>Select features</h2>
+
+        <div class="axis-panels">
+          <!-- X axis (columns) -->
+          <section class="axis-panel" id="panel-x">
+            <h3>X-axis (columns)</h3>
+            <div class="group-row">
+              <label
+                ><input
+                  type="checkbox"
+                  data-group="inputs"
+                  class="group-x"
+                />Inputs</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  data-group="elements"
+                  class="group-x"
+                />Elements</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  data-group="micro"
+                  class="group-x"
+                />Microstructures</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  data-group="props"
+                  class="group-x"
+                />Properties</label
+              >
+            </div>
+            <div id="list-x" class="overflow" style="height: 70px"></div>
+            <div class="row small">
+              <button id="x-select-all" type="button" class="btn btn-ghost">
+                Select all
+              </button>
+              <button id="x-clear" type="button" class="btn btn-ghost">
+                Clear
+              </button>
+            </div>
+          </section>
+
+          <!-- Y axis (rows) -->
+          <section class="axis-panel" id="panel-y">
+            <h3>Y-axis (rows)</h3>
+            <div class="group-row">
+              <label
+                ><input
+                  type="checkbox"
+                  data-group="inputs"
+                  class="group-y"
+                />Inputs</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  data-group="elements"
+                  class="group-y"
+                />Elements</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  data-group="micro"
+                  class="group-y"
+                />Microstructures</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  data-group="props"
+                  class="group-y"
+                />Properties</label
+              >
+            </div>
+            <div id="list-y" class="overflow" style="height: 120px"></div>
+            <div class="row small">
+              <button id="y-select-all" type="button" class="btn btn-ghost">
+                Select all
+              </button>
+              <button id="y-clear" type="button" class="btn btn-ghost">
+                Clear
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <div class="axis-panel" style="padding-top: 8px">
+          <div class="row">
+            <button id="export" class="btn">Export selected</button>
+            <span id="selected-count">[0 selected]</span>
+          </div>
+        </div>
+
+        <div id="toolbar">
+          <!-- <span>Surrogate model</span> -->
+          <button id="toggle-surrogate" class="btn btn-primary">
+            Show surrogate model curves
+          </button>
+        </div>
+
+        <h2>Recommendation Range</h2>
+        <section class="axis-panel">
+          <div class="row" style="align-items: center; gap: 8px">
+            <label for="knn-delta" style="font-size: small"
+              >Distance threshold:</label
+            >
+            <input
+              type="range"
+              id="knn-delta"
+              min="0.01"
+              max="0.20"
+              step="0.01"
+              value="0.02"
+              style="width: 30%"
+            />
+            <span id="knn-delta-value">0.02</span>
+          </div>
+        </section>
+      </aside>
+
+      <main id="main">
+        <div id="plot-info">No plot yet — choose features and click Apply</div>
+        <div id="splom"></div>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+    <script src="webapp/tutorial.js"></script>
+    <script type="module" src="webapp/app.js"></script>
+    <footer class="site-footer">
+      <div>
+        Developed by team: Suyang (Susie) Li, Fernando Fajardo-Rojas, Diego
+        Gomez-Gualdron, Remco Chang, Mingwei Li
+      </div>
+    </footer>
+  </body>
+</html>
