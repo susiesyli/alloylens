@@ -9,5 +9,6 @@ prune model_checkpoint
 prune node_modules
 prune figures
 prune notes
+prune web
 
 global-exclude *.ipynb *.key *.DS_Store __pycache__ *.py[cod]

@@ -36,4 +36,12 @@ app
 
 
 ### Web demo:
-[susiesyli.com/alloylens-web/](susiesyli.com/alloylens-web/)
+[susiesyli.com/alloylens-web/](https://susiesyli.com/alloylens-web/)
+
+The source for the web demo is in [`web/`](web/).
+
+## Repository layout
+
+- `src/alloylens/`: the Python package published to PyPI
+- `examples/`: example notebook for the Python package
+- `web/`: the web demo
