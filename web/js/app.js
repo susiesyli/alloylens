@@ -56,6 +56,11 @@ if (knnDeltaInput) {
   });
 }
 
+const alwaysRecommend = document.getElementById("always-recommend");
+alwaysRecommend.addEventListener("change", () => {
+  model?.set("always_recommend", alwaysRecommend.checked);
+});
+
 // group toggles
 const groupXCheckboxes = Array.from(document.querySelectorAll(".group-x"));
 const groupYCheckboxes = Array.from(document.querySelectorAll(".group-y"));
@@ -342,6 +347,7 @@ function applySelection() {
     ),
     surrogate: true,
     knn_delta: knnDelta,
+    always_recommend: alwaysRecommend.checked,
   });
 
   model.on("change:selected", () => {

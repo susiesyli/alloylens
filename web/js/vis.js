@@ -1443,59 +1443,63 @@ function highlight_brushed_2(
   subplots,
   row_attrs,
   col_attrs,
-  color_reach = 0.02
+  color_reach = 0.02,
+  always_recommend = false
 ) {
   // record the brushed to data (via crossfilter) and update the color in all sub-scatterplots
-  let filter_nonempty = cross.allFiltered().length > 0;
-  if (filter_nonempty) {
+  let n_matches = cross.allFiltered().length;
+  let any_match = n_matches > 0;
+  let any_excluded = n_matches < data.length;
+  if (any_match && !(always_recommend && any_excluded)) {
     highlight_brushed(data, sc, cross, subplots, row_attrs, col_attrs);
-  } else {
-    // filter returns no data points, color points by distance to the filter box
-    let all_attrs = row_attrs.concat(col_attrs);
-    let attr_extents = Object.fromEntries(
-      zip(
-        all_attrs,
-        all_attrs.map((a) => d3.extent(data, (d) => d[a]))
-      )
-    );
-    data.forEach((d, i) => {
-      // d.brushed = cross.isElementFiltered(i);
-      d.dist = distance_to_cuboid(d, all_attrs, cross.dimensions, attr_extents);
-    });
-
-    //recolor data points
-    let [vmin, vmax] = d3.extent(data, (d) => d.dist);
-    // ---- use user-specified fraction of range ----
-    const reach = color_reach; // fraction in [0,1]
-    //domain for color scale
-    let [cmin, cmax] = [vmin, vmin + reach * (vmax - vmin)];
-    data.forEach((d, i) => {
-      d.brushed = d.dist < cmax;
-    });
-    // color scale (sc) by distance to the filter box
-    sc = d3
-      .scaleLinear()
-      .domain([cmin, cmax])
-      .range([RECOMMENDED, EXCLUDED])
-      .interpolate(d3.interpolateHcl)
-      .clamp(true);
-    let sc_gl = (d) => {
-      let c = sc(d.dist);
-      return [...color2gl(c), 1.0];
-    };
-    let colors = data.map((d) => sc_gl(d));
-    let depths = data.map((d, i) => (d.dist - vmin) / (vmax - vmin + 1e-4)); //-1=near, 1=far
-    let stroke_widths = data.map((d, i) =>
-      d.dist > vmin + color_reach * (vmax - vmin) ? 1 : 0.5
-    );
-    subplots.forEach((subplot_row, i) =>
-      subplot_row.forEach((subplot, j) => {
-        if (row_attrs[i] !== col_attrs[j]) {
-          subplot.recolor(colors, { depths, stroke_widths });
-        }
-      })
-    );
+    return;
   }
+
+  // color the points outside the filters by their distance to the filter box
+  let all_attrs = row_attrs.concat(col_attrs);
+  let attr_extents = Object.fromEntries(
+    zip(
+      all_attrs,
+      all_attrs.map((a) => d3.extent(data, (d) => d[a]))
+    )
+  );
+  data.forEach((d, i) => {
+    d.is_match = any_match && cross.isElementFiltered(i);
+    d.dist = distance_to_cuboid(d, all_attrs, cross.dimensions, attr_extents);
+  });
+
+  let [vmin, vmax] = d3.extent(
+    data.filter((d) => !d.is_match),
+    (d) => d.dist
+  );
+  // ---- use user-specified fraction of range ----
+  let cmax = vmin + color_reach * (vmax - vmin);
+  // with matches on screen, recommendations are shown but not selected
+  data.forEach((d) => {
+    d.brushed = any_match ? d.is_match : d.dist < cmax;
+  });
+  let near_sc = d3
+    .scaleLinear()
+    .domain([vmin, cmax])
+    .range([RECOMMENDED, EXCLUDED])
+    .interpolate(d3.interpolateHcl)
+    .clamp(true);
+  let colors = data.map((d) => [
+    ...color2gl(d.is_match ? C[1] : near_sc(d.dist)),
+    1.0,
+  ]);
+  //-1=near, 1=far
+  let depths = data.map((d) =>
+    d.is_match ? -0.5 : (d.dist - vmin) / (vmax - vmin + 1e-4)
+  );
+  let stroke_widths = data.map((d) => (d.is_match || d.dist <= cmax ? 0.5 : 1));
+  subplots.forEach((subplot_row, i) =>
+    subplot_row.forEach((subplot, j) => {
+      if (row_attrs[i] !== col_attrs[j]) {
+        subplot.recolor(colors, { depths, stroke_widths });
+      }
+    })
+  );
 }
 
 function highlight_brushed(

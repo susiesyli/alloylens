@@ -43,7 +43,7 @@
       element: ".threshold",
       title: "Widen the search",
       intro:
-        "If no alloy fits, the closest ones are recommended in yellow. This sets how far from your ranges to look.",
+        "If no alloy fits, the closest ones are recommended in yellow. Set how far to look, or turn on the switch to see them alongside matches.",
       position: "right",
     },
     {

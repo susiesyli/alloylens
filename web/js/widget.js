@@ -117,8 +117,22 @@ function render({ model, el }) {
     .style("top", `0px`)
     .style("left", `${side_bar_width}px`);
 
+  const paint_points = () =>
+    splom.highlight_brushed_2(
+      splom.data,
+      splom.subplots[0][0].scales.sc,
+      splom.cross,
+      splom.subplots,
+      splom.row_attrs,
+      splom.col_attrs,
+      model.get("knn_delta") ?? 0.02,
+      model.get("always_recommend"),
+    );
+
   // boxes drawn on a plot update the selection the same way the sliders do
   const sync_selection = () => {
+    const none_match = splom.cross.allFiltered().length === 0;
+    if (none_match || model.get("always_recommend")) paint_points();
     model.set(
       "selected",
       data.map((d) => d.brushed),
@@ -219,6 +233,11 @@ function render({ model, el }) {
     }
   });
 
+  model.on("change:always_recommend", () => {
+    paint_points();
+    sync_selection();
+  });
+
   // Re-run KNN coloring if user changes knn_delta
   model.on("change:knn_delta", () => {
     const colorReach = model.get("knn_delta") ?? 0.02;
@@ -231,6 +250,7 @@ function render({ model, el }) {
       splom.row_attrs,
       splom.col_attrs,
       colorReach,
+      model.get("always_recommend"),
     );
 
     // update selection + distances on the model
@@ -412,6 +432,7 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
       splom.row_attrs,
       splom.col_attrs,
       colorReach,
+      model.get("always_recommend"),
     );
     for (const row of splom.subplots) {
       for (const sp of row) {
@@ -705,6 +726,7 @@ function draw_side_sliders(svg, splom, model) {
       splom.row_attrs,
       splom.col_attrs,
       colorReach,
+      model.get("always_recommend"),
     );
     for (const row of splom.subplots) {
       for (const sp of row) {

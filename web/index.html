@@ -173,6 +173,10 @@
               />
               <span id="knn-delta-value">0.02</span>
             </div>
+            <label class="switch">
+              <input type="checkbox" role="switch" id="always-recommend" />
+              Always show recommendations
+            </label>
           </div>
         </section>
       </aside>
@@ -203,8 +207,8 @@
       Alloys inside every range turn magenta. If none fit, the closest alloys
       are recommended in yellow, fading to grey with distance. Double-click
       a slider to reset it. <b>c</b>, Export the selected alloys, overlay curves
-      predicted by the surrogate model, and set how far the recommendation range
-      reaches when no alloy fits. <i>n</i> = 2,000 alloys sampled from the
+      predicted by the surrogate model, set how far the recommendation range
+      reaches, and choose whether recommendations stay on alongside matches. <i>n</i> = 2,000 alloys sampled from the
       <a href="https://zenodo.org/records/15189444">2025 IEEE SciVis Contest dataset</a>
       by Bugelnig and Requena (<a
         href="https://creativecommons.org/licenses/by/4.0/"
