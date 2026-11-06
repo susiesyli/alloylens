@@ -1,14 +1,42 @@
 svg text {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
-  -khtml-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  -o-user-select: none;
   user-select: none;
   font-family: inherit;
+  font-size: 10px;
+  fill: var(--ink, #000);
+}
+
+svg text.axis-title {
   font-size: 12px;
-  fill: var(--muted, #667);
+}
+
+.side-range-min,
+.side-range-max,
+.bottom-range-min,
+.bottom-range-max {
+  font-weight: 700;
+}
+
+.tick line,
+path.domain {
+  stroke-width: 0.75px;
+}
+
+/* Box drawn on a plot to filter it */
+.brush .selection {
+  fill: var(--match, #d6176b);
+  fill-opacity: 0.1;
+  stroke: none;
+  rx: 6px;
+  ry: 6px;
+}
+
+svg.side-slider,
+svg.bottom-slider {
+  display: block;
 }
 
 .slider-bg,
@@ -23,9 +51,6 @@ svg text {
 
 .side-slider-fg {
   cursor: ns-resize;
-}
-.slider-bg {
-  stroke-linecap: round;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

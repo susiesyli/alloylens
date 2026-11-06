@@ -196,13 +196,14 @@ function attachListChangeListeners() {
   setDefaultFeatures("x", defaultX);
   setDefaultFeatures("y", defaultY);
 
-  plotInfo.textContent = "Showing default SPLOM (6 elements × 2 properties).";
-
   // Automatically draw initial SPLOM with these defaults
   applySelection();
+  document.dispatchEvent(new Event("alloylens:ready"));
 })();
 
 // ----------------- UI builders -----------------
+const SHORT_NAME = 10; // characters that fit in half the feature list
+
 function checkGroups(checkboxNodes, keysToCheck) {
   checkboxNodes.forEach((cb) => {
     cb.checked = keysToCheck.includes(cb.dataset.group);
@@ -229,6 +230,10 @@ function refreshAxisList(axis) {
   const listEl = axis === "x" ? elListX : elListY;
   const cols = gatherGroupCols(axis);
   listEl.innerHTML = "";
+  listEl.classList.toggle(
+    "two-col",
+    cols.every((c) => c.length <= SHORT_NAME),
+  );
 
   // Build checkboxes for the visible columns in this axis
   const frag = document.createDocumentFragment();
@@ -302,6 +307,10 @@ function selectedFeaturesFromList(listEl) {
 }
 
 // ----------------- Apply → mount widget -----------------
+const SUBPLOT_HEIGHT = 150;
+const SIDE_BAR = 90; // matches side_bar_width in widget.js
+const BOTTOM_BAR = 72; // matches bottom_bar_height in widget.js
+
 function applySelection() {
   const x_feats = selectedFeaturesFromList(elListX);
   const y_feats = selectedFeaturesFromList(elListY);
@@ -314,14 +323,23 @@ function applySelection() {
 
   splomHost.innerHTML = "";
 
+  // Shrink subplots to fit every column, then scroll past the minimum size
+  const available = splomHost.parentElement.clientWidth;
+  const subplotWidth = Math.floor(
+    Math.max(120, Math.min(180, (available - SIDE_BAR) / x_feats.length)),
+  );
+
   model = new Model({
     data: { data: raw },
     col_attrs: x_feats, // X axis = columns
     row_attrs: y_feats, // Y axis = rows
-    subplot_width: 180,
-    subplot_height: 160,
-    width: Math.min(window.innerWidth - 340, x_feats.length * 180 + 90),
-    height: Math.min(window.innerHeight - 40, y_feats.length * 160 + 90),
+    subplot_width: subplotWidth,
+    subplot_height: SUBPLOT_HEIGHT,
+    width: Math.min(available, x_feats.length * subplotWidth + SIDE_BAR),
+    height: Math.min(
+      window.innerHeight - 40,
+      y_feats.length * SUBPLOT_HEIGHT + BOTTOM_BAR,
+    ),
     surrogate: true,
     knn_delta: knnDelta,
   });
@@ -329,7 +347,7 @@ function applySelection() {
   model.on("change:selected", () => {
     const sel = model.get("selected") || [];
     const n = sel.reduce((acc, v) => acc + (v ? 1 : 0), 0);
-    spanCount.textContent = `[${n} selected]`;
+    spanCount.textContent = `${n.toLocaleString()} selected`;
   });
 
   AlloyLensWidget.render({ model, el: splomHost });

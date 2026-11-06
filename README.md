@@ -62,4 +62,4 @@ If you use AlloyLens in your research, please cite the [paper](https://arxiv.org
 
 ## Team
 
-Suyang (Susie) Li, Fernando Fajardo-Rojas, Diego Gomez-Gualdron, Remco Chang, and Mingwei Li.
+Susie S.Y. Li, Fernando Fajardo-Rojas, Diego Gomez-Gualdron, Remco Chang, and Mingwei Li.

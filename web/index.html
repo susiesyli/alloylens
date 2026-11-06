@@ -6,73 +6,65 @@
     <title>AlloyLens</title>
     <link rel="stylesheet" href="css/widget.css" />
     <link rel="stylesheet" href="css/ui.css" />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/intro.js/minified/introjs.min.css"
-    />
-    <style>
-      /* Target only the Intro.js Skip button to match site typography */
-      .introjs-skipbutton {
-        font-family: inherit !important;
-        font-size: 16px !important;
-        padding: 6px 6px !important;
-        border-radius: 8px !important;
-        color: var(--text) !important;
-        background: transparent !important;
-        box-shadow: none !important;
-      }
-    </style>
   </head>
   <body>
-    <header class="page-header">
-      <h1>
-        AlloyLens: A Visual Analytics Tool for High-throughput Alloy Screening
-        and Inverse Design
-      </h1>
-      <a
-        href="tutorial.html"
-        class="btn btn-ghost icon-btn"
-        id="tutorial-link"
-        title="Walkthrough Tutorial"
+    <!-- Bends the page behind the walkthrough panel, like light through glass -->
+    <svg class="glass-defs" width="0" height="0" aria-hidden="true">
+      <filter
+        id="glass-refract"
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        color-interpolation-filters="sRGB"
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M12 2a10 10 0 100 20 10 10 0 000-20z"
-            stroke="currentColor"
-            stroke-width="1.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M12 8v1"
-            stroke="currentColor"
-            stroke-width="1.4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M11.8 12.5c.2-.9 1-1.5 1.9-1.5.8 0 1.6.4 1.6 1.2 0 1.6-2.5 1.9-2.5 3.3"
-            stroke="currentColor"
-            stroke-width="1.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </a>
-    </header>
-    <div id="app">
-      <aside id="controls">
-        <h2>Select features</h2>
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.012 0.018"
+          numOctaves="2"
+          seed="7"
+          result="noise"
+        />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="noise"
+          scale="26"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </svg>
 
-        <div class="axis-panels">
+    <header class="masthead">
+      <h1>
+        AlloyLens: A Visual Analytics Tool for
+        <span class="nowrap">High-throughput</span> Alloy Screening and Inverse
+        Design
+      </h1>
+      <p class="authors">
+        <a href="https://susiesyli.com">Susie S.Y. Li</a>, Fernando
+        Fajardo-Rojas, Diego Gomez-Gualdron, Remco Chang &amp;
+        <a href="https://mwli.net/">Mingwei Li</a>
+      </p>
+      <p class="links">
+        <a href="https://arxiv.org/abs/2511.02133" target="_blank" rel="noopener">Paper</a>
+        <a href="https://github.com/susiesyli/alloylens" target="_blank" rel="noopener">Code</a>
+        <a href="https://pypi.org/project/alloylens/" target="_blank" rel="noopener">Python package</a>
+        <a href="tutorial.html">Guide</a>
+        <a href="tutorial.html" id="tutorial-link">Walkthrough</a>
+      </p>
+    </header>
+
+    <figure id="app">
+      <aside id="controls">
+        <section class="panel">
+          <h2 class="panel-title">
+            <span class="panel-letter">a</span>Features
+          </h2>
+
           <!-- X axis (columns) -->
           <section class="axis-panel" id="panel-x">
-            <h3>X-axis (columns)</h3>
+            <h3>X axis (columns)</h3>
             <div class="group-row">
               <label
                 ><input
@@ -103,20 +95,18 @@
                 />Properties</label
               >
             </div>
-            <div id="list-x" class="overflow" style="height: 70px"></div>
+            <div id="list-x" class="overflow"></div>
             <div class="row small">
-              <button id="x-select-all" type="button" class="btn btn-ghost">
+              <button id="x-select-all" type="button" class="text-btn">
                 Select all
               </button>
-              <button id="x-clear" type="button" class="btn btn-ghost">
-                Clear
-              </button>
+              <button id="x-clear" type="button" class="text-btn">Clear</button>
             </div>
           </section>
 
           <!-- Y axis (rows) -->
           <section class="axis-panel" id="panel-y">
-            <h3>Y-axis (rows)</h3>
+            <h3>Y axis (rows)</h3>
             <div class="group-row">
               <label
                 ><input
@@ -147,66 +137,82 @@
                 />Properties</label
               >
             </div>
-            <div id="list-y" class="overflow" style="height: 120px"></div>
+            <div id="list-y" class="overflow"></div>
             <div class="row small">
-              <button id="y-select-all" type="button" class="btn btn-ghost">
+              <button id="y-select-all" type="button" class="text-btn">
                 Select all
               </button>
-              <button id="y-clear" type="button" class="btn btn-ghost">
-                Clear
-              </button>
+              <button id="y-clear" type="button" class="text-btn">Clear</button>
             </div>
           </section>
-        </div>
+        </section>
 
-        <div class="axis-panel" style="padding-top: 8px">
-          <div class="row">
-            <button id="export" class="btn">Export selected</button>
-            <span id="selected-count">[0 selected]</span>
+        <section class="panel">
+          <h2 class="panel-title">
+            <span class="panel-letter">c</span>Results
+          </h2>
+          <div class="result-row">
+            <button id="export" type="button" class="btn">
+              Export selected
+            </button>
+            <span id="selected-count">0 selected</span>
           </div>
-        </div>
-
-        <div id="toolbar">
-          <!-- <span>Surrogate model</span> -->
-          <button id="toggle-surrogate" class="btn btn-primary">
-            Show surrogate model curves
+          <button id="toggle-surrogate" type="button" class="btn wide">
+            Show surrogate curves
           </button>
-        </div>
-
-        <h2>Recommendation Range</h2>
-        <section class="axis-panel">
-          <div class="row" style="align-items: center; gap: 8px">
-            <label for="knn-delta" style="font-size: small"
-              >Distance threshold:</label
-            >
-            <input
-              type="range"
-              id="knn-delta"
-              min="0.01"
-              max="0.20"
-              step="0.01"
-              value="0.02"
-              style="width: 30%"
-            />
-            <span id="knn-delta-value">0.02</span>
+          <div class="threshold">
+            <label for="knn-delta">Recommendation range</label>
+            <div class="row">
+              <input
+                type="range"
+                id="knn-delta"
+                min="0.01"
+                max="0.20"
+                step="0.01"
+                value="0.02"
+              />
+              <span id="knn-delta-value">0.02</span>
+            </div>
           </div>
         </section>
       </aside>
 
       <main id="main">
-        <div id="plot-info">No plot yet — choose features and click Apply</div>
+        <div class="matrix-head">
+          <h2 class="panel-title">
+            <span class="panel-letter">b</span>Scatterplot matrix
+          </h2>
+          <ul class="legend">
+            <li><span class="key base"></span>Alloy</li>
+            <li><span class="key match"></span>Matches filters</li>
+            <li><span class="key recommended"></span>Recommended</li>
+            <li><span class="key excluded"></span>Excluded</li>
+            <li><span class="key curve"></span>Surrogate model</li>
+          </ul>
+        </div>
+        <div id="plot-info">Loading alloy data</div>
         <div id="splom"></div>
       </main>
-    </div>
+    </figure>
 
-    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+    <p class="caption">
+      <b>Fig. 1 | Find alloys that meet a design target.</b>
+      <b>a</b>, Choose the variables for the columns and rows of the matrix.
+      <b>b</b>, Each plot compares one variable against another. Drag the
+      sliders along an axis to set a target range, or draw a box on a plot.
+      Alloys inside every range turn magenta. If none fit, the closest alloys
+      are recommended in yellow, fading to grey with distance. Double-click
+      a slider to reset it. <b>c</b>, Export the selected alloys, overlay curves
+      predicted by the surrogate model, and set how far the recommendation range
+      reaches when no alloy fits. <i>n</i> = 2,000 alloys sampled from the
+      <a href="https://zenodo.org/records/15189444">2025 IEEE SciVis Contest dataset</a>
+      by Bugelnig and Requena (<a
+        href="https://creativecommons.org/licenses/by/4.0/"
+        >CC BY 4.0</a
+      >).
+    </p>
+
     <script src="js/tutorial.js"></script>
     <script type="module" src="js/app.js"></script>
-    <footer class="site-footer">
-      <div>
-        Developed by team: Suyang (Susie) Li, Fernando Fajardo-Rojas, Diego
-        Gomez-Gualdron, Remco Chang, Mingwei Li
-      </div>
-    </footer>
   </body>
 </html>

@@ -10,8 +10,8 @@ import crossfilter from "https://esm.sh/crossfilter2@1.5.4";
 // import regl from "regl";
 // ------------ Constants ---------------
 const pyplot_cycles = [
-  "#1f77b4",
-  "#ff7f0e",
+  "#7c6fcf", // base points
+  "#d6176b", // points matching the filters
   "#2ca02c",
   "#d62728",
   "#9467bd",
@@ -22,6 +22,8 @@ const pyplot_cycles = [
   "#17becf",
 ];
 export const C = pyplot_cycles;
+const EXCLUDED = "#c8c8c8"; // points outside the filters
+const RECOMMENDED = "#f5b800"; // closest points when none match the filters
 
 // --------------- data utils ---------------
 export function normalize(d, vmin, vmax, eps = 1e-4) {
@@ -415,7 +417,7 @@ function scatter_frame(
   container = undefined,
   data = undefined,
   {
-    background = "#eee",
+    background = "#fff",
     xticks = 5,
     yticks = 5,
     x_tickvalues = undefined,
@@ -566,7 +568,7 @@ export function scatter_gl(
   data = undefined,
   {
     is_framed = true,
-    background = "#eee",
+    background = "#fff",
     xticks = 5,
     yticks = 5,
     x_tickvalues = undefined,
@@ -774,7 +776,7 @@ export function splom_gl2(
 
     //color styles,
     s = () => 5, //mark size,
-    stroke = "#eee",
+    stroke = "#fff",
     stroke_width = 1,
     //todo:
     //fill
@@ -1474,7 +1476,7 @@ function highlight_brushed_2(
     sc = d3
       .scaleLinear()
       .domain([cmin, cmax])
-      .range([C[1], "#aaa"])
+      .range([RECOMMENDED, EXCLUDED])
       .interpolate(d3.interpolateHcl)
       .clamp(true);
     let sc_gl = (d) => {
@@ -1484,7 +1486,7 @@ function highlight_brushed_2(
     let colors = data.map((d) => sc_gl(d));
     let depths = data.map((d, i) => (d.dist - vmin) / (vmax - vmin + 1e-4)); //-1=near, 1=far
     let stroke_widths = data.map((d, i) =>
-      d.dist > vmin + color_reach * (vmax - vmin) ? 0 : 1
+      d.dist > vmin + color_reach * (vmax - vmin) ? 1 : 0.5
     );
     subplots.forEach((subplot_row, i) =>
       subplot_row.forEach((subplot, j) => {
@@ -1512,14 +1514,19 @@ function highlight_brushed(
   });
 
   //new color scale (sc) by brushed
-  let highlight_sc = (d) => (d.brushed ? sc(d) : "#aaa");
+  let any_excluded = data.some((d) => !d.brushed);
+  let highlight_sc = (d) => {
+    if (!d.brushed) return EXCLUDED;
+    return any_excluded ? C[1] : sc(d);
+  };
   let sc_gl = (d) => {
     let c = highlight_sc(d);
     return [...color2gl(c), 1.0];
   };
   let colors = data.map((d) => sc_gl(d));
   let depths = data.map((d, i) => (d.brushed ? -i / data.length : 0.0)); //-1=near, 1=far
-  let stroke_widths = data.map((d, i) => (d.brushed ? 1 : 0));
+  // the white outline shrinks a point, so excluded points sit behind matches
+  let stroke_widths = data.map((d, i) => (any_excluded && d.brushed ? 0.5 : 1));
   if (brush_highlight) {
     subplots.forEach((subplot_row, i) =>
       subplot_row.forEach((subplot, j) => {
@@ -1577,7 +1584,7 @@ export function scatter(
   {
     xticks = 5,
     yticks = 5,
-    background = "#eee",
+    background = "#fff",
     x_tickvalues = undefined,
     y_tickvalues = undefined,
     x = (d) => d.x,
@@ -1818,7 +1825,7 @@ export function frame(
   {
     x_label_offset = 24,
     y_label_offset = -10,
-    background = "#eee",
+    background = "#fff",
     xticks = 4,
     yticks = 4,
     x_tickvalues = undefined,
@@ -1846,7 +1853,7 @@ export function frame(
     xlabel = undefined,
     ylabel = undefined,
     label_fontsize = 10,
-    stroke = "#fff",
+    stroke = "#b4b4b4",
     stroke_width = 0.2,
   } = {}
 ) {
@@ -1901,7 +1908,8 @@ export function frame(
     .axisBottom(sx)
     .ticks(xticks)
     // .tickFormat(d3.format(",.0f"))
-    .tickSizeInner(-(height - padding_bottom - padding_top));
+    .tickSizeInner(3)
+    .tickSizeOuter(0);
   if (x_tickvalues !== undefined) {
     ax.tickValues(x_tickvalues);
   }
@@ -1916,7 +1924,8 @@ export function frame(
     .axisLeft(sy)
     .ticks(yticks)
     // .tickFormat(d3.format(",.0f"))
-    .tickSizeInner(-(width - padding_left - padding_right));
+    .tickSizeInner(3)
+    .tickSizeOuter(0);
   if (y_tickvalues !== undefined) {
     ay.tickValues(y_tickvalues);
   }
@@ -1930,7 +1939,7 @@ export function frame(
   sel
     .selectAll(".tick > line")
     .style("stroke", stroke || d3.color(background).brighter());
-  sel.selectAll("path.domain").style("display", "none");
+  sel.selectAll("path.domain").style("stroke", stroke);
 
   // g_axes.selectAll(".tick > line").attr("stroke", d3.color(background).brighter());
   // g_axes.selectAll("path.domain").attr("display", "none");

@@ -9,10 +9,16 @@ import { splom_gl2, C, cumulative_sum, clip, lines } from "./vis.js";
 /* ---------- small UI helpers ---------- */
 function style_control(sel, control_size) {
   sel
-    .attr("fill", C[0])
-    .attr("stroke", "white")
-    .attr("stroke-width", control_size / 10)
+    .attr("fill", "#fff")
+    .attr("stroke", "#000")
+    .attr("stroke-width", 1.5)
     .attr("r", control_size / 2);
+}
+
+// Keeps very small values, like molar volume, short enough for the axis
+function fmt_tick(v) {
+  const small = v !== 0 && Math.abs(v) < 1e-3;
+  return d3.format(small ? ".3~e" : ".3~g")(v);
 }
 
 /* ---------- SPLOM helpers ---------- */
@@ -54,7 +60,7 @@ function drawSurrogateCurves(splom, row_attrs, col_attrs, curves, show) {
         .attr("class", "surrogate-curve")
         .attr("d", pathD)
         .attr("fill", "none")
-        .attr("stroke", "orange")
+        .attr("stroke", "#000")
         .attr("stroke-width", 1.5)
         .attr("opacity", 0.9)
         .attr("pointer-events", "none");
@@ -71,7 +77,7 @@ function render({ model, el }) {
 
   // layout
   const side_bar_width = 90;
-  const bottom_bar_height = 90;
+  const bottom_bar_height = 72;
   const subplot_width = model.get("subplot_width") || 200;
   const subplot_height = model.get("subplot_height") || 200;
 
@@ -111,6 +117,15 @@ function render({ model, el }) {
     .style("top", `0px`)
     .style("left", `${side_bar_width}px`);
 
+  // boxes drawn on a plot update the selection the same way the sliders do
+  const sync_selection = () => {
+    model.set(
+      "selected",
+      data.map((d) => d.brushed),
+    );
+    model.save_changes();
+  };
+
   // build SPLOM
   const splom = splom_gl2(splom_container, data, {
     layout: "both",
@@ -129,6 +144,7 @@ function render({ model, el }) {
     col_attrs,
     row_attrs,
     brush: true,
+    brush_listeners: { brush: sync_selection, end: sync_selection },
     xticks: 3,
     yticks: 3,
     show_tick_texts: false,
@@ -152,8 +168,10 @@ function render({ model, el }) {
       drawSurrogateCurves(splom, row_attrs, col_attrs, curves, curvesVisible);
       button
         .text(curvesVisible ? "Hide surrogate curves" : "Show surrogate curves")
-        .style("background", curvesVisible ? "#f08080" : "#ffcc80");
+        .classed("is-on", curvesVisible);
     });
+    // a redraw starts with the curves hidden
+    button.text("Show surrogate curves").classed("is-on", false);
   }
 
   // side sliders
@@ -250,8 +268,8 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
   const splom_subplots = splom.subplots;
   const n_cols = splom_subplots[0].length;
 
-  const control_size = 12;
-  const y_offset = 30;
+  const control_size = 10;
+  const y_offset = 22;
 
   const x_offsets = cumulative_sum([
     0,
@@ -274,29 +292,29 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
     .attr("class", "bottom-slider")
     .attr("transform", (i) => `translate(${x_offsets[i]}, 0)`);
 
-  const fmt = d3.format(".3~g");
+  const fmt = fmt_tick;
 
   const label_min = g_sliders
     .append("text")
     .attr("class", "bottom-range-min")
-    .attr("y", y_offset - 20)
-    .attr("text-anchor", "middle")
-    .style("font", "10px sans-serif")
+    .attr("y", y_offset - 10)
+    .attr("text-anchor", "end")
+    .style("font-size", "10px")
     .style("pointer-events", "none");
 
   const label_max = g_sliders
     .append("text")
     .attr("class", "bottom-range-max")
-    .attr("y", y_offset - 20)
-    .attr("text-anchor", "middle")
-    .style("font", "10px sans-serif")
+    .attr("y", y_offset - 10)
+    .attr("text-anchor", "start")
+    .style("font-size", "10px")
     .style("pointer-events", "none");
 
   const sliders_bg = g_sliders
     .append("line")
     .attr("class", "slider-bg")
-    .attr("stroke", "#aaa")
-    .attr("stroke-width", control_size * 0.6)
+    .attr("stroke", "#d0d0d0")
+    .attr("stroke-width", 2)
     .attr("x1", (i) => sxs[i].range()[0])
     .attr("x2", (i) => sxs[i].range()[1])
     .attr("y1", y_offset)
@@ -305,8 +323,8 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
   const sliders_fg = g_sliders
     .append("line")
     .attr("class", "bottom-slider-fg")
-    .attr("stroke", C[0])
-    .attr("stroke-width", control_size * 0.6)
+    .attr("stroke", "#000")
+    .attr("stroke-width", 2)
     .attr("x1", (i) => sxs[i].range()[0])
     .attr("x2", (i) => sxs[i].range()[1])
     .attr("y1", y_offset)
@@ -322,16 +340,19 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
       const ax = d3
         .axisBottom(sxs[j])
         .ticks(ticks)
-        .tickSizeInner(-control_size);
+        .tickFormat(fmt_tick)
+        .tickSizeInner(3)
+        .tickSizeOuter(0);
       const axis = d3.select(this).call(ax);
       axis.selectAll("path.domain").remove();
-      axis.selectAll("g.tick line").attr("stroke", "#eee");
+      axis.selectAll("g.tick line").attr("stroke", "#000");
     });
 
   g_sliders
     .append("text")
     .attr("x", (j) => d3.mean(sxs[j].range()))
-    .attr("y", y_offset - 12)
+    .attr("class", "axis-title")
+    .attr("y", y_offset + 34)
     .style("text-anchor", "middle")
     .text((j) => splom.col_attrs[j]);
 
@@ -363,8 +384,13 @@ function draw_bottom_sliders(svg, splom, model, subplot_width) {
     d3.select(sliders_fg.nodes()[j])
       .attr("x1", sx(lower))
       .attr("x2", sx(upper));
-    d3.select(label_min.nodes()[j]).attr("x", sx(lower)).text(fmt(lower));
-    d3.select(label_max.nodes()[j]).attr("x", sx(upper)).text(fmt(upper));
+    const [x_min, x_max] = sx.domain();
+    d3.select(label_min.nodes()[j])
+      .attr("x", sx(lower) + 3)
+      .text(lower > x_min ? fmt(lower) : "");
+    d3.select(label_max.nodes()[j])
+      .attr("x", sx(upper) - 3)
+      .text(upper < x_max ? fmt(upper) : "");
 
     // 2) apply filter in crossfilter
     dim.filter([lower, upper]);
@@ -507,8 +533,10 @@ function draw_side_sliders(svg, splom, model) {
   const splom_subplots = splom.subplots;
   const n_rows = splom_subplots.length;
 
-  const control_size = 12;
-  const x_offset = 60;
+  const control_size = 10;
+  const x_offset = 72;
+  const tick_label_x = x_offset - control_size / 2 - 6; // lines up with d3's ticks
+  const label_height = 12;
 
   // Each row's y-scale; prefer a SCATTER cell, fall back to first cell
   // const sys = splom_subplots.map((row, i) => {
@@ -530,14 +558,14 @@ function draw_side_sliders(svg, splom, model) {
     .attr("class", "side-slider")
     .attr("transform", (i) => `translate(0, ${total_height - y_offsets[i]})`);
 
-  const fmt = d3.format(".3~g");
+  const fmt = fmt_tick;
 
   const label_min = g_sliders
     .append("text")
     .attr("class", "side-range-min")
-    .attr("x", x_offset - 60)
-    .attr("text-anchor", "start")
-    .style("font", "10px sans-serif")
+    .attr("x", tick_label_x)
+    .attr("text-anchor", "end")
+    .style("font-size", "10px")
     .style("pointer-events", "none")
     .style("paint-order", "stroke")
     .style("stroke", "white")
@@ -547,9 +575,9 @@ function draw_side_sliders(svg, splom, model) {
   const label_max = g_sliders
     .append("text")
     .attr("class", "side-range-max")
-    .attr("x", x_offset - 60)
-    .attr("text-anchor", "start")
-    .style("font", "10px sans-serif")
+    .attr("x", tick_label_x)
+    .attr("text-anchor", "end")
+    .style("font-size", "10px")
     .style("pointer-events", "none")
     .style("paint-order", "stroke")
     .style("stroke", "white")
@@ -559,8 +587,8 @@ function draw_side_sliders(svg, splom, model) {
   const sliders_bg = g_sliders
     .append("line")
     .attr("class", "slider-bg")
-    .attr("stroke", "#aaa")
-    .attr("stroke-width", control_size * 0.6)
+    .attr("stroke", "#d0d0d0")
+    .attr("stroke-width", 2)
     .attr("y1", (i) => sys[i](sys[i].domain()[0]))
     .attr("y2", (i) => sys[i](sys[i].domain()[1]))
     .attr("x1", x_offset)
@@ -569,8 +597,8 @@ function draw_side_sliders(svg, splom, model) {
   const sliders_fg = g_sliders
     .append("line")
     .attr("class", "side-slider-fg")
-    .attr("stroke", C[0])
-    .attr("stroke-width", control_size * 0.6)
+    .attr("stroke", "#000")
+    .attr("stroke-width", 2)
     .attr("y1", (i) => sys[i](sys[i].domain()[0]))
     .attr("y2", (i) => sys[i](sys[i].domain()[1]))
     .attr("x1", x_offset)
@@ -597,19 +625,25 @@ function draw_side_sliders(svg, splom, model) {
     .style("z-index", 2)
     .each(function (i) {
       const ticks = scatterInRowFrom(splom, i)?.frame?.yticks ?? 4;
-      const ay = d3.axisLeft(sys[i]).ticks(ticks).tickSizeInner(-control_size);
+      const ay = d3
+        .axisLeft(sys[i])
+        .ticks(ticks)
+        .tickFormat(fmt_tick)
+        .tickSizeInner(3)
+        .tickSizeOuter(0);
       const axis = d3.select(this).call(ay);
       axis.selectAll("path.domain").remove();
-      axis.selectAll("g.tick line").attr("stroke", "#eee");
+      axis.selectAll("g.tick line").attr("stroke", "#000");
     });
 
   g_sliders
     .append("text")
     .attr("y", (i) => d3.mean(sys[i].range()))
-    .attr("x", x_offset + 20)
+    .attr("class", "axis-title")
+    .attr("x", 12)
     .attr(
       "transform",
-      (i) => `rotate(-90 ${x_offset + 20} ${d3.mean(sys[i].range())})`,
+      (i) => `rotate(-90 12 ${d3.mean(sys[i].range())})`,
     )
     .style("text-anchor", "middle")
     .text((i) => splom.row_attrs[i]);
@@ -628,12 +662,27 @@ function draw_side_sliders(svg, splom, model) {
     d3.select(sliders_fg.nodes()[i])
       .attr("y1", sy(lower))
       .attr("y2", sy(upper));
+    const [y_min, y_max] = sy.domain();
+    const show_min = lower > y_min;
+    const show_max = upper < y_max;
+    // keep the two values apart when the handles are close
+    const y_upper = sy(upper);
+    const y_lower = show_max
+      ? Math.max(sy(lower), y_upper + label_height)
+      : sy(lower);
     d3.select(label_min.nodes()[i])
-      .attr("y", sy(lower) + 3)
-      .text(fmt(lower));
+      .attr("y", y_lower + 3)
+      .text(show_min ? fmt(lower) : "");
     d3.select(label_max.nodes()[i])
-      .attr("y", sy(upper) + 3)
-      .text(fmt(upper));
+      .attr("y", y_upper + 3)
+      .text(show_max ? fmt(upper) : "");
+    // a handle's value takes the place of any tick label it would cover
+    const covered = (y) =>
+      (show_min && Math.abs(y - y_lower) < label_height) ||
+      (show_max && Math.abs(y - y_upper) < label_height);
+    d3.select(slider_axes.nodes()[i])
+      .selectAll("g.tick text")
+      .style("visibility", (d) => (covered(sy(d)) ? "hidden" : null));
 
     // 2) apply filter in crossfilter
     dim.filter([lower, upper]);

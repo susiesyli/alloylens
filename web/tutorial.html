@@ -3,121 +3,58 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AlloyLens — Walkthrough Tutorial</title>
-    <link rel="stylesheet" href="css/widget.css" />
+    <title>AlloyLens guide</title>
     <link rel="stylesheet" href="css/ui.css" />
-    <style>
-      body {
-        padding: 20px;
-        max-width: 900px;
-        margin: auto;
-        font-family:
-          system-ui,
-          -apple-system,
-          sans-serif;
-      }
-      h1 {
-        margin-bottom: 8px;
-      }
-      .step {
-        border-left: 4px solid #4a90e2;
-        padding: 12px;
-        margin: 12px 0;
-        background: #fbfbfd;
-      }
-      .actions {
-        margin-top: 8px;
-      }
-      .muted {
-        color: #666;
-        font-size: 0.95em;
-      }
-      a.btn {
-        text-decoration: none;
-      }
-    </style>
   </head>
   <body>
-    <a href="index.html" class="btn btn-ghost">← Back to App</a>
-    <h1>AlloyLens Walkthrough</h1>
-    <p class="muted">
-      A brief step-by-step guide to get started with the webapp.
-    </p>
-
-    <div class="step">
-      <h2>Step 1 — Choose Features</h2>
-      <p>
-        On the left under <strong>Select features</strong>, pick which variable
-        groups to show (Inputs, Elements, Microstructures, Properties). Use the
-        checkboxes to filter lists.
+    <main class="guide">
+      <a href="index.html">Back to AlloyLens</a>
+      <h1>How to use AlloyLens</h1>
+      <p class="lede">
+        Find alloys that meet a design target by filtering their compositions
+        and properties.
       </p>
-      <div class="actions muted">
-        Tip: Use <strong>Select all</strong> or <strong>Clear</strong> for each
-        axis panel to quickly modify selections.
-      </div>
-    </div>
 
-    <div class="step">
-      <h2>Step 2 — Configure Axes</h2>
-      <p>
-        Choose X-axis (columns) and Y-axis (rows) variables from the lists. The
-        SPLOM (scatterplot matrix) will be built from these selections.
-      </p>
-    </div>
-
-    <div class="step">
-      <h2>Step 3 — Apply & View</h2>
-      <p>
-        Once features are selected, return to the main area and click the button
-        labeled <strong>Apply</strong> (if present) or wait for the plots to
-        render. The <em>plot area</em> shows a summary and the SPLOM.
-      </p>
-    </div>
-
-    <div class="step">
-      <h2>Step 4 — Export Results</h2>
-      <p>
-        Use the <strong>Export selected</strong> button in the controls to
-        download the currently selected items.
-      </p>
-    </div>
-
-    <div class="step">
-      <h2>Step 5 — Surrogate Model</h2>
-      <p>
-        Toggle <strong>Show surrogate curves</strong> to overlay predicted
-        curves from the surrogate model. This helps compare experimental data to
-        model outputs.
-      </p>
-      <div class="muted">
-        Note: Surrogate model behavior depends on the chosen features.
-      </div>
-    </div>
-
-    <div class="step">
-      <h2>Step 6 — Recommendation Range</h2>
-      <p>
-        Adjust the <strong>Distance threshold</strong> slider to control the
-        recommendation neighborhood size. The displayed value shows the current
-        threshold.
-      </p>
-    </div>
-
-    <div class="step">
-      <h2>Helpful Hints</h2>
-      <ul>
-        <li>Start with a small set of features to quickly inspect trends.</li>
+      <ol>
         <li>
-          Use the <strong>selected count</strong> to know how many items are
-          active.
+          <h2>Choose features</h2>
+          <p>
+            In panel a, tick the groups to list (inputs, elements,
+            microstructures, or properties), then pick variables for the X axis
+            and Y axis. The scatterplot matrix updates as you choose.
+          </p>
         </li>
-        <li>Check the console for errors if plots fail to render.</li>
-      </ul>
-    </div>
-
-    <p class="muted">
-      If you want an interactive, step-by-step overlay (guided tour), I can add
-      a small in-page tour using Shepherd.js or Intro.js. Want that added?
-    </p>
+        <li>
+          <h2>Set target ranges</h2>
+          <p>
+            In panel b, drag the sliders along each axis, or draw a box on any
+            plot. Alloys inside every range turn magenta. Double-click a slider
+            to reset it.
+          </p>
+        </li>
+        <li>
+          <h2>Review recommendations</h2>
+          <p>
+            If no alloy fits your ranges, the closest ones are recommended in
+            yellow. Use the recommendation range in panel c to control how far from your
+            ranges to look.
+          </p>
+        </li>
+        <li>
+          <h2>Compare with the surrogate model</h2>
+          <p>
+            Select Show surrogate curves in panel c to overlay curves predicted
+            by the surrogate model.
+          </p>
+        </li>
+        <li>
+          <h2>Export the results</h2>
+          <p>
+            Select Export selected in panel c to download the selected alloys as
+            a CSV file. With nothing selected, it downloads all alloys.
+          </p>
+        </li>
+      </ol>
+    </main>
   </body>
 </html>
