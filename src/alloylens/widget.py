@@ -10,7 +10,7 @@ def _read(p: str) -> str:
 
 class AlloyLensWidget(anywidget.AnyWidget):
     """Public widget users will import."""
-    _esm = _read("js-build/mywidget.js")
+    _esm = _read("js-build/widget.js")
 
     # synced traits the JS expects
     data = T.Any(default_value=None).tag(sync=True)               # {columns, records}

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/alloylens/js/mywidget.js --bundle --format=esm --sourcemap --outfile=src/alloylens/js-build/mywidget.js"
+    "build": "esbuild src/alloylens/js/widget.js --bundle --format=esm --sourcemap --outfile=src/alloylens/js-build/widget.js"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",

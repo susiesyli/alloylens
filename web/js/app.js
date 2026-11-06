@@ -1,5 +1,5 @@
 // app.js
-import AlloyLensWidget from "./mywidget.js";
+import AlloyLensWidget from "./widget.js";
 import * as d3 from "https://esm.sh/d3@7.9.0";
 
 // ----------------- tiny widget-model shim -----------------
@@ -165,7 +165,7 @@ function attachListChangeListeners() {
 
 // ----------------- init -----------------
 (async function init() {
-  raw = await d3.csv("./webapp/data/sample.csv", d3.autoType);
+  raw = await d3.csv("./data/sample.csv", d3.autoType);
 
   // numeric columns
   const first = raw[0] ?? {};

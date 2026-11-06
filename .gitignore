@@ -9,14 +9,9 @@ setup.py
 
 */dataset/
 */__pycache__/
-*/node_modules/
-*/mywidget/js/
-*/__pycache__/
 .DS_Store
 .vscode/
 .pypirc
 */build/
 *.egg-info/
 *.pyc
-node_modules/
-.gitignore

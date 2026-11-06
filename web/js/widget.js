@@ -1,4 +1,4 @@
-// mywidget.js  — webapp build
+// widget.js: website build
 
 import * as d3 from "https://esm.sh/d3@7.9.0";
 // import regl2 from "https://esm.sh/regl@2.1.0?bundle";
@@ -145,7 +145,7 @@ function render({ model, el }) {
     // lazy-load once
     button.on("click", async () => {
       if (!curvesLoaded) {
-        curves = await d3.json("webapp/data/curves.json"); // path relative to index.html
+        curves = await d3.json("data/curves.json"); // path relative to index.html
         curvesLoaded = true;
       }
       curvesVisible = !curvesVisible;

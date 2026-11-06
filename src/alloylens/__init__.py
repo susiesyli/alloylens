@@ -19,7 +19,6 @@ Expose a small API for the AlloyLens package so users can import
 
 from .ui import AlloyLensApp, splom
 from .widget import AlloyLensWidget
-from .test import say_hello
 from importlib.metadata import version, PackageNotFoundError
 
 try:
@@ -29,6 +28,5 @@ except PackageNotFoundError:
 
 
 __all__ = ["AlloyLensApp", "splom",
-            "say_hello",
             "AlloyLensWidget",
             "__version__"]

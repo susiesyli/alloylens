@@ -1,7 +1,0 @@
-.DS_Store
-.ipynb_checkpoints/
-__pycache__/
-dataset/
-node_modules/
-mywidget/js-build/
-

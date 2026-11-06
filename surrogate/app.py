@@ -9,7 +9,7 @@ import pandas as pd
 import torch
 import pathlib
 
-from PropertyPredictor import PropertyPredictor  
+from property_predictor import PropertyPredictor
 
 # ---------- fastapi basics ----------
 app = FastAPI()
@@ -20,14 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve webapp 
-app.mount("/", StaticFiles(directory="webapp", html=True), name="webapp")
+# Serve the website
+app.mount("/", StaticFiles(directory="../web", html=True), name="web")
 
 # ---------- load model & data once ----------
 torch.set_float32_matmul_precision("high")  # optional
 device = torch.device("cpu")
 
-CKPT_PATH = pathlib.Path("./model_checkpoint/best.pth")
+CKPT_PATH = pathlib.Path("./checkpoints/best.pth")
 mc = torch.load(CKPT_PATH, map_location=device, weights_only=True)
 
 X_COLS: List[str] = mc["x_cols"]
@@ -121,7 +121,7 @@ def predict_local_curves(
     return result
 
 # ---------- endpoint ----------
-@app.post("/webapp/data/curves.json", response_model=CurvesResponse)
+@app.post("/data/curves.json", response_model=CurvesResponse)
 def surrogate_curves(req: CurvesRequest):
     # choose dims to compute for (fall back to full)
     x_cols = req.x_cols if req.x_cols else X_COLS

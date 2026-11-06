@@ -28,9 +28,8 @@ jobs:
 
       - name: Stage site files
         run: |
-          mkdir _site
-          cp web/index.html web/tutorial.html web/ui.css _site/
-          cp -R web/webapp _site/webapp
+          cp -R web _site
+          rm _site/README.md
           touch _site/.nojekyll
 
       - name: Publish to alloylens-web

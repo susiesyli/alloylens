@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: "If you use AlloyLens, please cite it using this metadata."
+type: software
+title: AlloyLens
+abstract: >-
+  An interactive visualization tool for exploring high-dimensional,
+  high-throughput alloy data and supporting inverse material design.
+authors:
+  - given-names: Suyang
+    family-names: Li
+    affiliation: Tufts University
+  - given-names: Fernando
+    family-names: Fajardo-Rojas
+    affiliation: Colorado School of Mines
+  - given-names: Diego
+    family-names: Gomez-Gualdron
+    affiliation: Colorado School of Mines
+  - given-names: Remco
+    family-names: Chang
+    affiliation: Tufts University
+  - given-names: Mingwei
+    family-names: Li
+    affiliation: Tufts University
+version: 0.0.2
+date-released: "2025-10-30"
+license: MIT
+repository-code: "https://github.com/susiesyli/alloylens"
+url: "https://susiesyli.com/alloylens-web/"
+keywords:
+  - visualization
+  - materials science
+  - alloy design
+  - scatterplot matrix
+preferred-citation:
+  type: article
+  title: "AlloyLens: A Visual Analytics Tool for High-throughput Alloy Screening and Inverse Design"
+  authors:
+    - given-names: Suyang
+      family-names: Li
+    - given-names: Fernando
+      family-names: Fajardo-Rojas
+    - given-names: Diego
+      family-names: Gomez-Gualdron
+    - given-names: Remco
+      family-names: Chang
+    - given-names: Mingwei
+      family-names: Li
+  year: 2025
+  doi: 10.48550/arXiv.2511.02133
+  url: "https://arxiv.org/abs/2511.02133"
+  notes: "IEEE VIS 2025 Scientific Visualization Contest Honorable Mention"
